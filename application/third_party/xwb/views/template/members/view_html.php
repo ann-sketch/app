@@ -33,7 +33,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
     <link href="<?php echo base_url($this->config->item('assets_folder').'vendor/needim/noty/lib/noty.css'); ?>" rel="stylesheet">
 
     <!-- Custom Theme Style -->
-    <link href="<?php echo base_url($this->config->item('assets_folder').'build/css/custom.min.css'); ?>" rel="stylesheet">
+    <link href="<?php echo base_url($this->config->item('assets_folder').'build/css/custom.css'); ?>" rel="stylesheet">
 
     <!-- XWB Purchasing Style -->
     <link href="<?php echo base_url($this->config->item('assets_folder').'css/style.css'); ?>" rel="stylesheet">

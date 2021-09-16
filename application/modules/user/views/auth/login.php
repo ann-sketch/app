@@ -18,7 +18,7 @@
     <link href="<?php echo base_url('assets/vendors/animate.css/animate.min.css'); ?>" rel="stylesheet">
 
     <!-- Custom Theme Style -->
-    <link href="<?php echo base_url('assets/build/css/custom.min.css'); ?>" rel="stylesheet">
+    <link href="<?php echo base_url('assets/build/css/custom.css'); ?>" rel="stylesheet">
     <style type="text/css">
         .login_content form input[type="submit"]{
             margin-left: inherit;
