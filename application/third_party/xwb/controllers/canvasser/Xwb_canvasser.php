@@ -713,6 +713,15 @@ class Xwb_canvasser extends XWB_purchasing_base
         $data['status'] = true;
         $data['message'] = lang('msg_forwarded_purchasing');
 
+        $message = "Canvasser has update & forward a request to you. Kindly login to see.";
+        // $message = json_encode($new_requests[1])["request name"];
+        $phone = "0207133523";
+        $sender_id = "ADONKO LTD";
+        $key = "00c44cf39580579e337c"; //your unique API key;
+        $message = urlencode($message); //encode url;
+        $url = "http://goldsms.smsalertgh.com/smsapi?key=$key&to=$phone&msg=$message&sender_id=$sender_id";
+        file_get_contents($url); //call url and store result;
+
         echo $this->xwbJsonEncode($data);
     }
 

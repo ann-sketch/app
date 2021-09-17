@@ -8,7 +8,13 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * @copyright   Copyright (c) 2017, Jay-r Simpron
  */
 
+function debug_to_console($data) {
+    $output = $data;
+    if (is_array($output))
+        $output = implode(',', $output);
 
+    echo "<script>console.log('Debug Objects: " . $output . "' );</script>";
+}
 
 /**
  * Main controller for request module
@@ -26,7 +32,7 @@ class Xwb_request extends XWB_purchasing_base
         parent::__construct();
         $this->load->model('request/Request_model', 'Request');
     }
-    
+
 
     /**
      * All request view
@@ -35,7 +41,7 @@ class Xwb_request extends XWB_purchasing_base
      */
     public function index()
     {
-        $this->redirectUser(array('members','budget','canvasser','auditor','property','board'));
+        $this->redirectUser(array('members', 'budget', 'canvasser', 'auditor', 'property', 'board'));
 
         $data['page_title'] = lang('request_list_page_title'); //title of the page
         $data['page_script'] = 'request'; // script filename of the page user.js
@@ -50,7 +56,7 @@ class Xwb_request extends XWB_purchasing_base
      */
     public function newreq()
     {
-        $this->redirectUser(array('members','canvasser','budget','admin','auditor','property','board'));
+        $this->redirectUser(array('members', 'canvasser', 'budget', 'admin', 'auditor', 'property', 'board'));
         $this->load->model('product/Product_model', 'Product');
         $this->load->model('request_category/Request_category_model', 'ReqCat');
 
@@ -74,45 +80,45 @@ class Xwb_request extends XWB_purchasing_base
     {
         $this->redirectUser();
         $d = $this->Request->getRequests();
-        
+
         $data['data'] = array();
 
-        if ($d->num_rows()>0) {
+        if ($d->num_rows() > 0) {
             foreach ($d->result() as $key => $v) {
                 $data['data'][] = array(
-                                        $v->id,
-                                        $v->prno,
-                                        $v->date_requested,
-                                        $v->user_id,
-                                        $v->dept,
-                                        $v->request_type,
-                                        $v->request_item,
-                                        $v->request_description,
-                                        $v->request_qty,
-                                        $v->state,
-                                        '<a href="javascript:;" class="btn btn-xs btn-warning" onClick="xwb.editRequest('.$v->id.');">'.lang('btn_edit').'</a>
-										<a href="javascript:;" onClick="xwb.deleteRequest('.$v->id.');" class="btn btn-xs btn-danger">'.lang('btn_delete').'</a>',
-                                        );
+                    $v->id,
+                    $v->prno,
+                    $v->date_requested,
+                    $v->user_id,
+                    $v->dept,
+                    $v->request_type,
+                    $v->request_item,
+                    $v->request_description,
+                    $v->request_qty,
+                    $v->state,
+                    '<a href="javascript:;" class="btn btn-xs btn-warning" onClick="xwb.editRequest(' . $v->id . ');">' . lang('btn_edit') . '</a>
+										<a href="javascript:;" onClick="xwb.deleteRequest(' . $v->id . ');" class="btn btn-xs btn-danger">' . lang('btn_delete') . '</a>',
+                );
             }
         }
         echo $this->xwbJsonEncode($data);
     }
 
 
-/**
- * Get all request list
- *
- * @return json
- */
+    /**
+     * Get all request list
+     *
+     * @return json
+     */
     public function getRequestList()
     {
         $this->redirectUser();
         $user_id = $this->log_user_data->user_id;
         $r = $this->Request->getRequestListByUser($user_id);
-        
+
         $data['data'] = array();
 
-        if ($r->num_rows()>0) {
+        if ($r->num_rows() > 0) {
             foreach ($r->result() as $key => $v) {
                 $bntEdit = '';
                 $class_action = '';
@@ -121,34 +127,34 @@ class Xwb_request extends XWB_purchasing_base
                 } else {
                     $headDenied = $this->checkHeadDenied($v->id);
                     if ($headDenied) {
-                        $status = '<span class="label label-warning">'.lang('status_head_denied').'</span>';
+                        $status = '<span class="label label-warning">' . lang('status_head_denied') . '</span>';
                         $class_action = 'has-action';
                     } else {
                         $status = $this->xwb_purchasing->getStatus('request', $v->status);
                     }
                 }
-                
-                
+
+
                 if (in_array($v->status, $this->member_status_action)) {
                     $class_action = 'has-action';
                 }
 
-                if($this->canEdit($v)){
-                    $bntEdit = '<a href="'.base_url('request/edit_request/'.$v->id).'" class="btn btn-xs btn-warning">'.lang('btn_edit').'</a>';
+                if ($this->canEdit($v)) {
+                    $bntEdit = '<a href="' . base_url('request/edit_request/' . $v->id) . '" class="btn btn-xs btn-warning">' . lang('btn_edit') . '</a>';
                 }
 
                 $data['data'][] = array(
-                                        sprintf('PR-%08d', $v->id),
-                                        '<a class="btn btn-default btn-xs '.$class_action.'" href="'.base_url('request/view_request/'.$v->id).'">'.$v->request_name.'</a>',
-                                        date("F j, Y, g:i a", strtotime($v->date_created)),
-                                        ($v->date_needed==null?"":date("F j, Y", strtotime($v->date_needed))),
-                                        $v->purpose,
-                                        nl2br($v->admin_note),
-                                        '<a href="javascript:;" onClick="xwb.viewItems('.$v->id.')" class="btn btn-app"><i class="fa fa-search"></i>'.lang('btn_view_items').'</a>',
-                                        $status." ".'<label class="badge badge-info">'.time_elapse($v->date_updated).'</label>',
-                                        $bntEdit.
-                                        '<a target="_blank" href="'.base_url('request/print_request/'.$v->id).'" class="btn btn-xs btn-info">'.lang('btn_print_req').'</a>',
-                                        );
+                    sprintf('PR-%08d', $v->id),
+                    '<a class="btn btn-default btn-xs ' . $class_action . '" href="' . base_url('request/view_request/' . $v->id) . '">' . $v->request_name . '</a>',
+                    date("F j, Y, g:i a", strtotime($v->date_created)),
+                    ($v->date_needed == null ? "" : date("F j, Y", strtotime($v->date_needed))),
+                    $v->purpose,
+                    nl2br($v->admin_note),
+                    '<a href="javascript:;" onClick="xwb.viewItems(' . $v->id . ')" class="btn btn-app"><i class="fa fa-search"></i>' . lang('btn_view_items') . '</a>',
+                    $status . " " . '<label class="badge badge-info">' . time_elapse($v->date_updated) . '</label>',
+                    $bntEdit .
+                        '<a target="_blank" href="' . base_url('request/print_request/' . $v->id) . '" class="btn btn-xs btn-info">' . lang('btn_print_req') . '</a>',
+                );
             }
         }
         echo $this->xwbJsonEncode($data);
@@ -164,7 +170,7 @@ class Xwb_request extends XWB_purchasing_base
     {
         $this->redirectUser();
         $req_id = $this->input->post('req_id');
-        $u = $this->db->get_where('request', array('id'=>$req_id))->row();
+        $u = $this->db->get_where('request', array('id' => $req_id))->row();
         echo $this->xwbJsonEncode($u);
         exit();
     }
@@ -182,22 +188,22 @@ class Xwb_request extends XWB_purchasing_base
         $this->form_validation->set_rules('prno', lang('purchase_num'), 'required|alpha_dash');
         $this->form_validation->set_rules('request_type', lang('reqname_label'), 'required');
         /*$this->form_validation->set_rules('department_head', 'Department Head', 'required');*/
-                
-        
+
+
         if ($this->form_validation->run() == false) {
             $data['status'] = false;
             $data['message'] = validation_errors();
         } else {
             $data = array(
-                    'prno' => $this->input->post('prno'),
-                    'date_requested' => $this->input->post('date_requested'),
-                    'user_id' => $this->input->post('user_id'),
-                    'dept' => $this->input->post('dept'),
-                    'request_type' => $this->input->post('request_type'),
-                    'request_item' => $this->input->post('request_item'),
-                    'request_description' => $this->input->post('request_description'),
-                    'request_qty' => $this->input->post('request_qty'),
-                    'state' => $this->input->post('state'),
+                'prno' => $this->input->post('prno'),
+                'date_requested' => $this->input->post('date_requested'),
+                'user_id' => $this->input->post('user_id'),
+                'dept' => $this->input->post('dept'),
+                'request_type' => $this->input->post('request_type'),
+                'request_item' => $this->input->post('request_item'),
+                'request_description' => $this->input->post('request_description'),
+                'request_qty' => $this->input->post('request_qty'),
+                'state' => $this->input->post('state'),
             );
 
             $this->db->where('id', $this->input->post('id'));
@@ -228,7 +234,7 @@ class Xwb_request extends XWB_purchasing_base
         $this->form_validation->set_rules('date_needed', lang('dt_date_needed'), 'required');
         $this->form_validation->set_rules('product[]', lang('dt_heading_item_name'), 'required');
         $this->form_validation->set_rules('quantity[]', lang('dt_heading_quantity'), 'required|integer');
-                
+
         if ($this->input->post('new_product_name[]') != null) {
             $this->form_validation->set_rules('new_product_name[]', lang('dt_heading_item_name'), 'required');
         }
@@ -250,20 +256,20 @@ class Xwb_request extends XWB_purchasing_base
         } else {
             $this->load->model('supplier/Supplier_model', 'Supplier');
             $this->load->model('product/Product_model', 'Product');
-            
+
             $posts = $this->input->post();
-            
+
             $data = array(
-                    'request_name' => $this->input->post('request_name'),
-                    'purpose' => $this->input->post('purpose'),
-                    'date_needed' => $this->input->post('date_needed'),
+                'request_name' => $this->input->post('request_name'),
+                'purpose' => $this->input->post('purpose'),
+                'date_needed' => $this->input->post('date_needed'),
             );
 
             $this->db->where('id', $this->input->post('request_id'));
             $this->db->update('request_list', $data);
 
 
-            
+
 
             //insert newly added product/ item
             if ($this->input->post('new_product_name') != null) {
@@ -271,12 +277,12 @@ class Xwb_request extends XWB_purchasing_base
                 foreach ($posts['new_product_name'] as $key => $value) {
                     $arr_data = array(
                         'request_id' => $posts['request_id'],
-                        'product_id' => ($posts['product_id'][$key]==''?0:$posts['product_id'][$key]),
+                        'product_id' => ($posts['product_id'][$key] == '' ? 0 : $posts['product_id'][$key]),
                         'product_name' => $posts['new_product_name'][$key],
                         'product_description' => $posts['new_product_description'][$key],
                         'quantity' => $posts['new_quantity'][$key],
                         'date_updated' => date('Y-m-d H:i:s'),
-                        );
+                    );
 
                     if ($this->log_user_data->group_name != 'members') {
                         if (ctype_digit($posts['new_supplier'][$key])) {
@@ -296,17 +302,17 @@ class Xwb_request extends XWB_purchasing_base
 
                     $db_data[] = $arr_data;
                 }
-                
+
                 $this->db->insert_batch('po_items', $db_data);
             }
 
-                
+
             foreach ($posts['product_name'] as $key => $value) {
                 $arr_data = array(
-                'product_name' => $posts['product_name'][$key],
-                'product_description' => $posts['product_description'][$key],
-                'quantity' => $posts['quantity'][$key],
-                'date_updated' => date('Y-m-d H:i:s'),
+                    'product_name' => $posts['product_name'][$key],
+                    'product_description' => $posts['product_description'][$key],
+                    'quantity' => $posts['quantity'][$key],
+                    'date_updated' => date('Y-m-d H:i:s'),
                 );
 
 
@@ -368,22 +374,22 @@ class Xwb_request extends XWB_purchasing_base
         $this->form_validation->set_rules('prno', lang('purchase_num'), 'required|alpha_dash');
         $this->form_validation->set_rules('request_type', lang('reqname_label'), 'required');
         /*$this->form_validation->set_rules('department_head', 'Department Head', 'required');*/
-        
+
         if ($this->form_validation->run() == false) {
             $data['status'] = false;
             $data['message'] = validation_errors();
         } else {
             $data = array(
-                    'prno' => $this->input->post('prno'),
-                    'date_requested' => $this->input->post('date_requested'),
-                    'user_id' => $this->input->post('user_id'),
-                    'dept' => $this->input->post('dept'),
-                    'request_type' => $this->input->post('request_type'),
-                    'request_item' => $this->input->post('request_item'),
-                    'request_description' => $this->input->post('request_description'),
-                    'request_qty' => $this->input->post('request_qty'),
-                    'state' => $this->input->post('state'),
-                    );
+                'prno' => $this->input->post('prno'),
+                'date_requested' => $this->input->post('date_requested'),
+                'user_id' => $this->input->post('user_id'),
+                'dept' => $this->input->post('dept'),
+                'request_type' => $this->input->post('request_type'),
+                'request_item' => $this->input->post('request_item'),
+                'request_description' => $this->input->post('request_description'),
+                'request_qty' => $this->input->post('request_qty'),
+                'state' => $this->input->post('state'),
+            );
 
             $this->db->insert('request', $data);
             $data['status'] = true;
@@ -455,7 +461,7 @@ class Xwb_request extends XWB_purchasing_base
         $this->form_validation->set_rules('request_name', lang('reqname_label'), 'required');
         $this->form_validation->set_rules('purpose', lang('reqname_purpose'), 'required');
         $this->form_validation->set_rules('date_needed', lang('dt_date_needed'), 'required');
-        
+
         if ($this->form_validation->run() == false) {
             $data['status'] = false;
             $data['message'] = validation_errors();
@@ -485,14 +491,14 @@ class Xwb_request extends XWB_purchasing_base
         $this->redirectUser();
         $this->form_validation->set_rules('item[]', lang('dt_heading_item_name'), 'required');
         $this->form_validation->set_rules('qty[]', lang('dt_heading_quantity'), 'required|integer');
-        
+
         if ($this->form_validation->run() == false) {
             $data['status'] = false;
             $data['message'] = validation_errors();
         } else {
             $inputs = $this->input->post();
             $session_data['new_request'][$inputs['step']] = $inputs;
-            
+
 
             unset($session_data['new_request'][$inputs['step']]['step']);
 
@@ -519,7 +525,7 @@ class Xwb_request extends XWB_purchasing_base
         $user_id = $this->log_user_data->user_id;
         $this->load->model('user/User_model', 'User');
         $user = $this->User->getUser($user_id)->row();
-        if ($user==null) {
+        if ($user == null) {
             $data['message'] = lang('msg_error_update_profile');
             $data['status'] = false;
             echo $this->xwbJsonEncode($data);
@@ -528,34 +534,34 @@ class Xwb_request extends XWB_purchasing_base
         $items = "";
 
         foreach ($new_requests[2]['item'] as $key => $value) {
-            $row = $key+1;
-            $items .= '<tr class="row_'.$row.'">';
-                $items .= '<td>'.$value.'</td><td>'.$new_requests[2]['description'][$key].'</td><td>'.$unit_measurement[$new_requests[2]['unit_measurement'][$key]].'</td><td>'.$new_requests[2]['qty'][$key].'</td><td><a class="btn btn-info btn-xs xwb-view-attach-preview" href=""><i class="fa fa-file-image-o"></i> '.lang('btn_attachment').'</a></td>';
+            $row = $key + 1;
+            $items .= '<tr class="row_' . $row . '">';
+            $items .= '<td>' . $value . '</td><td>' . $new_requests[2]['description'][$key] . '</td><td>' . $unit_measurement[$new_requests[2]['unit_measurement'][$key]] . '</td><td>' . $new_requests[2]['qty'][$key] . '</td><td><a class="btn btn-info btn-xs xwb-view-attach-preview" href=""><i class="fa fa-file-image-o"></i> ' . lang('btn_attachment') . '</a></td>';
             $items .= '</tr>';
         }
 
         $html = "";
         $html .= '<div class="row"><div class="col-md-4"><div class="form-group">
-                            <label class="control-label col-md-4 col-sm-4" for="requestor">'.lang('initiator_label').' <span class="required">*</span>
+                            <label class="control-label col-md-4 col-sm-4" for="requestor">' . lang('initiator_label') . ' <span class="required">*</span>
                             </label>
                             <div class="col-md-6 col-sm-6">
-                              <input disabled type="text" value="'.ucwords($user->first_name." ".$user->last_name).'" id="requestor" name="requestor" class="form-control col-md-7 col-xs-12">
+                              <input disabled type="text" value="' . ucwords($user->first_name . " " . $user->last_name) . '" id="requestor" name="requestor" class="form-control col-md-7 col-xs-12">
                             </div>
                   </div></div>';
 
         $html .= '<div class="col-md-4"><div class="form-group">
-                            <label class="control-label col-md-4 col-sm-4" for="department">'.lang('department_label').' <span class="required">*</span>
+                            <label class="control-label col-md-4 col-sm-4" for="department">' . lang('department_label') . ' <span class="required">*</span>
                             </label>
                             <div class="col-md-6 col-sm-6">
-                              <input disabled type="text" value="'.$user->dep_description.'" id="department" name="department" required="required" class="form-control col-md-7 col-xs-12">
+                              <input disabled type="text" value="' . $user->dep_description . '" id="department" name="department" required="required" class="form-control col-md-7 col-xs-12">
                             </div>
                   </div></div>';
 
         $html .= '<div class="col-md-4"><div class="form-group">
-                            <label class="control-label col-md-4 col-sm-4" for="request_name">'.lang('reqname_label').' <span class="required">*</span>
+                            <label class="control-label col-md-4 col-sm-4" for="request_name">' . lang('reqname_label') . ' <span class="required">*</span>
                             </label>
                             <div class="col-md-6 col-sm-6">
-                              <input disabled type="text" value="'.$new_requests[1]['request_name'].'" id="request_name" name="request_name" required="required" class="form-control col-md-7 col-xs-12">
+                              <input disabled type="text" value="' . $new_requests[1]['request_name'] . '" id="request_name" name="request_name" required="required" class="form-control col-md-7 col-xs-12">
                             </div>
                   </div></div></div>';
 
@@ -565,15 +571,15 @@ class Xwb_request extends XWB_purchasing_base
 		                        	<table class="table table_items">
 		                        		<thead>
 		                        			<tr>
-		                        				<th>'.lang('dt_heading_item_name').'</th>
-		                        				<th>'.lang('dt_heading_item_description').'</th>
-		                        				<th>'.lang('dt_heading_unit').'</th>
-		                        				<th>'.lang('dt_heading_quantity').'</th>
-		                        				<th>'.lang('dt_heading_attachment').'</th>
+		                        				<th>' . lang('dt_heading_item_name') . '</th>
+		                        				<th>' . lang('dt_heading_item_description') . '</th>
+		                        				<th>' . lang('dt_heading_unit') . '</th>
+		                        				<th>' . lang('dt_heading_quantity') . '</th>
+		                        				<th>' . lang('dt_heading_attachment') . '</th>
 		                        			</tr>
 		                        		</thead>
 		                        		<tbody>
-		                        			'.$items.'
+		                        			' . $items . '
 		                        		</tbody>
 		                        	</table>
 		                        </div>';
@@ -601,10 +607,24 @@ class Xwb_request extends XWB_purchasing_base
         $user = $this->User->getUser($this->log_user_data->user_id)->row(); // get current user
 
         $head_users = $this->User->getHeadDepartmentUsers($user->dep_name)->result(); // get all head of the department of the current users department
-        
-        
-        
-        if (count($head_users)==0) {
+
+        date_default_timezone_set('GMT');
+        $date = date('m/d/Y h:i a', time());
+
+        $info = json_encode($new_requests[1]);
+        $info = json_decode($info, true);
+        // debug_to_console($info['request_name']);
+
+        $message = "A '". $info['request_name'] . "' with Purpose '" . $info['purpose'] . "' has been initiated at " . $date;
+        // $message = json_encode($new_requests[1])["request name"];
+        $phone = "0207133523";
+        $sender_id = "ADONKO LTD";
+        $key = "00c44cf39580579e337c"; //your unique API key;
+        $message = urlencode($message); //encode url;
+        $url = "http://goldsms.smsalertgh.com/smsapi?key=$key&to=$phone&msg=$message&sender_id=$sender_id";
+        file_get_contents($url); //call url and store result;
+
+        if (count($head_users) == 0) {
             $data['status'] = false;
             $data['message'] = lang('msg_error_no_head');
             echo $this->xwbJsonEncode($data);
@@ -625,7 +645,7 @@ class Xwb_request extends XWB_purchasing_base
             $insert_id = $this->db->insert_id(); // get request list last insert id
 
 
-        /* insert items to po_items */
+            /* insert items to po_items */
 
             if ($res) {
                 $this->load->helper('file');
@@ -633,23 +653,23 @@ class Xwb_request extends XWB_purchasing_base
                 $insert_data = [];
                 foreach ($new_requests[2]['item'] as $key => $value) {
                     $insert_data = array(
-                                    'product_id' => ($new_requests[2]['product_id'][$key]==''?0:$new_requests[2]['product_id'][$key]),
-                                    'product_name' => $value,
-                                    'product_description' => $new_requests[2]['description'][$key],
-                                    'unit_measurement' => $new_requests[2]['unit_measurement'][$key],
-                                    'quantity' => $new_requests[2]['qty'][$key],
-                                    'request_id' => $insert_id
-                                    );
+                        'product_id' => ($new_requests[2]['product_id'][$key] == '' ? 0 : $new_requests[2]['product_id'][$key]),
+                        'product_name' => $value,
+                        'product_description' => $new_requests[2]['description'][$key],
+                        'unit_measurement' => $new_requests[2]['unit_measurement'][$key],
+                        'quantity' => $new_requests[2]['qty'][$key],
+                        'request_id' => $insert_id
+                    );
                     $this->db->insert('po_items', $insert_data);
                     $po_id = $this->db->insert_id();
-                    $row = $key+1;
+                    $row = $key + 1;
 
-                
+
                     if (!is_null($this->session->req_attachment) && array_key_exists($row, $this->session->req_attachment)) {
                         $req_attachment = $this->session->req_attachment[$row];
-            
-                        if (count($req_attachment)>0) {
-                            $destination_path = $this->config->item('storage_path').'uploads/';
+
+                        if (count($req_attachment) > 0) {
+                            $destination_path = $this->config->item('storage_path') . 'uploads/';
 
                             if (!is_dir($destination_path)) {
                                 mkdir($destination_path, 0777, true);
@@ -658,9 +678,9 @@ class Xwb_request extends XWB_purchasing_base
                             $attachment_data = [];
                             foreach ($req_attachment as $raKey => $raVal) {
                                 if (file_exists($raVal['full_path'])) {
-                                    @rename($raVal['full_path'], $destination_path.$raVal['file_name']);
-                                    $file_info = get_file_info($this->config->item('storage_path').'uploads/'.$raVal['file_name']);
-                                    $dir_path = dirname($this->config->item('storage_path').'uploads/'.$raVal['file_name']);
+                                    @rename($raVal['full_path'], $destination_path . $raVal['file_name']);
+                                    $file_info = get_file_info($this->config->item('storage_path') . 'uploads/' . $raVal['file_name']);
+                                    $dir_path = dirname($this->config->item('storage_path') . 'uploads/' . $raVal['file_name']);
 
                                     $attachment_data[] = array(
                                         'po_id' => $po_id,
@@ -678,7 +698,7 @@ class Xwb_request extends XWB_purchasing_base
                                         'image_height' => $raVal['image_height'],
                                         'image_type' => $raVal['image_type'],
                                         'image_size_str' => $raVal['image_size_str'],
-                                        );
+                                    );
 
                                     $this->db->insert_batch('attachment', $attachment_data);
                                 }
@@ -689,28 +709,28 @@ class Xwb_request extends XWB_purchasing_base
             }
 
 
-        /* Send email notification to all head users */
+            /* Send email notification to all head users */
             foreach ($head_users as $key => $value) {
                 $data_approval[] = array(
-                'request_id'=> $insert_id,
-                'user_id'=> $value->id,
+                    'request_id' => $insert_id,
+                    'user_id' => $value->id,
                 );
 
                 /**
-             * Assigning shortcode for email
-             *
-             * user_to
-             * user_from
-             * request_id
-             * message
-             * po
-             * item
-             */
+                 * Assigning shortcode for email
+                 *
+                 * user_to
+                 * user_from
+                 * request_id
+                 * message
+                 * po
+                 * item
+                 */
                 $shortcodes = array(
                     'user_to' => $value->id,
                     'message' => '',
                     'request_id' => $insert_id,
-                    );
+                );
 
                 $this->xwb_purchasing->setShortCodes($shortcodes);
 
@@ -725,7 +745,7 @@ class Xwb_request extends XWB_purchasing_base
             $res = $this->db->insert_batch('request_approval', $data_approval);
 
 
-        /* Adding to history transaction */
+            /* Adding to history transaction */
             $this->xwb_purchasing->addHistory('request_list', $insert_id, lang('hist_newreq'), lang('hist_newreq'), $this->log_user_data->user_id);
 
             if ($res) {
@@ -750,7 +770,7 @@ class Xwb_request extends XWB_purchasing_base
      */
     public function reqlist()
     {
-        $this->redirectUser(array('admin','canvasser','budget','auditor','board'));
+        $this->redirectUser(array('admin', 'canvasser', 'budget', 'auditor', 'board'));
         $this->load->model('user/User_model', 'User');
         $this->load->model('request_category/Request_category_model', 'ReqCat');
 
@@ -778,7 +798,7 @@ class Xwb_request extends XWB_purchasing_base
 
         $recordsTotal = $this->db->count_all_results();
         $recordsFiltered = $this->Request->countFiltered('getAdminRequest');
-        
+
 
         $this->Request->getAdminRequest();
         if ($this->input->get('length') != -1) {
@@ -792,7 +812,7 @@ class Xwb_request extends XWB_purchasing_base
 
         $data['data'] = array();
 
-        if ($r->num_rows()>0) {
+        if ($r->num_rows() > 0) {
             foreach ($r->result() as $key => $v) {
                 if ($v->status == 1) {
                     $disabled = "disabled";
@@ -801,18 +821,18 @@ class Xwb_request extends XWB_purchasing_base
                 }
 
                 $data['data'][] = array(
-                                        sprintf('PR-%08d', $v->id),
-                                        '<a class="btn btn-default btn-xs" href="'.base_url('request/view_request/'.$v->id).'">'.$v->request_name.'</a>',
-                                        date("F j, Y, g:i a", strtotime($v->date_created)),
-                                        ucwords($v->full_name),
-                                        $v->department,
-                                        $v->branch,
-                                        $v->purpose,
-                                        '<a href="javascript:;" onClick="xwb.viewItems('.$v->id.')" class="btn btn-app"><i class="fa fa-search"></i>'.lang('btn_view_items').'</a>',
-                                        ($v->date_needed==null?"":date("F j, Y", strtotime($v->date_needed))),
-                                        $this->reqActionBtn($v),
-                                        $this->xwb_purchasing->getStatus('request', $v->status)." ".'<label class="badge">'.time_elapse($v->date_updated).'</label>',
-                                        );
+                    sprintf('PR-%08d', $v->id),
+                    '<a class="btn btn-default btn-xs" href="' . base_url('request/view_request/' . $v->id) . '">' . $v->request_name . '</a>',
+                    date("F j, Y, g:i a", strtotime($v->date_created)),
+                    ucwords($v->full_name),
+                    $v->department,
+                    $v->branch,
+                    $v->purpose,
+                    '<a href="javascript:;" onClick="xwb.viewItems(' . $v->id . ')" class="btn btn-app"><i class="fa fa-search"></i>' . lang('btn_view_items') . '</a>',
+                    ($v->date_needed == null ? "" : date("F j, Y", strtotime($v->date_needed))),
+                    $this->reqActionBtn($v),
+                    $this->xwb_purchasing->getStatus('request', $v->status) . " " . '<label class="badge">' . time_elapse($v->date_updated) . '</label>',
+                );
             }
         }
         $data['draw'] = $this->input->get('draw');
@@ -834,64 +854,64 @@ class Xwb_request extends XWB_purchasing_base
         $i = $this->Request->getItemsPerRequest($request_id);
         $request = $this->Request->getRequest($request_id)->row();
         $data['data'] = [];
-        if ($i->num_rows()>0) {
+        if ($i->num_rows() > 0) {
             foreach ($i->result() as $key => $v) {
                 $done_icon = '';
                 $delete_item = '';
                 if ($v->status == 2 && $v->status == 0) {
-                    $delete_item = '<a class="btn btn-danger btn-xs" href="javascript:;" onClick="xwb.deleteItem('.$v->id.')"><i class="fa fa-remove"></i> '.lang('btn_delete').'</a>';
+                    $delete_item = '<a class="btn btn-danger btn-xs" href="javascript:;" onClick="xwb.deleteItem(' . $v->id . ')"><i class="fa fa-remove"></i> ' . lang('btn_delete') . '</a>';
                 }
                 if ($v->status != 0) {
                     $done_icon = '<i class="fa fa-check green"></i> ';
                 }
 
                 if ($this->log_user_data->group_name == 'budget') {
-                    $expenditure = '<select name="expenditure" data-itemid="'.$v->id.'" class="from-control expenditure">';
-                        $expenditure .= '<option value="">'.lang('select_option').'</option>';
-                        $expenditure .= '<option value="OPEX" '.($v->expenditure == 'OPEX'?'selected':'').'>'.getExpenditureName('OPEX').'</option>';
-                        $expenditure .= '<option value="CAPEX" '.($v->expenditure == 'CAPEX'?'selected':'').'>'.getExpenditureName('CAPEX').'</option>';
+                    $expenditure = '<select name="expenditure" data-itemid="' . $v->id . '" class="from-control expenditure">';
+                    $expenditure .= '<option value="">' . lang('select_option') . '</option>';
+                    $expenditure .= '<option value="OPEX" ' . ($v->expenditure == 'OPEX' ? 'selected' : '') . '>' . getExpenditureName('OPEX') . '</option>';
+                    $expenditure .= '<option value="CAPEX" ' . ($v->expenditure == 'CAPEX' ? 'selected' : '') . '>' . getExpenditureName('CAPEX') . '</option>';
                     $expenditure .= '</select>';
 
                     $data['data'][] = array(
-                        $done_icon.$v->product_name,
+                        $done_icon . $v->product_name,
                         $v->product_category,
                         $v->product_description,
                         $v->supplier,
                         $v->quantity,
                         $expenditure,
-                        '<a class="btn btn-info btn-xs" href="javascript:;" onClick="xwb.viewAttachmentPreview('.$v->id.')"><i class="fa fa-file-image-o"></i> '.lang('btn_attachment').'</a>',
-                        ($v->eta == null?"":date("F j, Y", strtotime($v->eta))),
-                        ($v->date_delivered==null?"":date("F j, Y", strtotime($v->date_delivered))),
-                        ($v->eta == null?"":date("F j, Y", strtotime($v->eta))),
+                        '<a class="btn btn-info btn-xs" href="javascript:;" onClick="xwb.viewAttachmentPreview(' . $v->id . ')"><i class="fa fa-file-image-o"></i> ' . lang('btn_attachment') . '</a>',
+                        ($v->eta == null ? "" : date("F j, Y", strtotime($v->eta))),
+                        ($v->date_delivered == null ? "" : date("F j, Y", strtotime($v->date_delivered))),
+                        ($v->eta == null ? "" : date("F j, Y", strtotime($v->eta))),
                     );
                 } elseif ($this->log_user_data->group_name == 'admin') {
                     $attachment = '';
-                    if ($request->archive!=1) {
-                        $attachment = '<a class="btn btn-info btn-xs" href="javascript:;" onClick="xwb.viewAttachmentPreview('.$v->id.')"><i class="fa fa-file-image-o"></i> '.lang('btn_attachment').'</a>';
+                    if ($request->archive != 1) {
+                        $attachment = '<a class="btn btn-info btn-xs" href="javascript:;" onClick="xwb.viewAttachmentPreview(' . $v->id . ')"><i class="fa fa-file-image-o"></i> ' . lang('btn_attachment') . '</a>';
                     }
-                    
+
                     $data['data'][] = array(
-                        $done_icon.$v->product_name,
+                        $done_icon . $v->product_name,
                         $v->product_category,
                         $v->product_description,
                         $v->supplier,
                         $v->quantity,
                         number_format($v->unit_price, 2, '.', ','),
                         number_format(($v->unit_price * $v->quantity), 2, '.', ','),
-                        $attachment.$delete_item,
+                        $attachment . $delete_item,
                         $v->eta,
                         $v->date_delivered,
                     );
                 } else {
                     $data['data'][] = array(
-                        $done_icon.$v->product_name,
+                        $done_icon . $v->product_name,
                         $v->product_category,
                         $v->product_description,
                         $v->quantity,
-                        '<a class="btn btn-info btn-xs" href="javascript:;" onClick="xwb.viewAttachmentPreview('.$v->id.')"><i class="fa fa-file-image-o"></i> '.lang('btn_attachment').'</a>',
-                        ($v->eta == null?"":date("F j, Y", strtotime($v->eta))),
-                        ($v->date_delivered==null?"":date("F j, Y", strtotime($v->date_delivered))),
-                        ($v->eta == null?"":date("F j, Y", strtotime($v->eta))),
+                        '<a class="btn btn-info btn-xs" href="javascript:;" onClick="xwb.viewAttachmentPreview(' . $v->id . ')"><i class="fa fa-file-image-o"></i> ' . lang('btn_attachment') . '</a>',
+                        ($v->eta == null ? "" : date("F j, Y", strtotime($v->eta))),
+                        ($v->date_delivered == null ? "" : date("F j, Y", strtotime($v->date_delivered))),
+                        ($v->eta == null ? "" : date("F j, Y", strtotime($v->eta))),
                     );
                 }
             }
@@ -911,24 +931,24 @@ class Xwb_request extends XWB_purchasing_base
         $request_id = $this->input->get('request_id');
         $i = $this->Request->getItemsPerRequest($request_id);
         $data['data'] = array();
-        
-        if ($i->num_rows()>0) {
+
+        if ($i->num_rows() > 0) {
             foreach ($i->result() as $key => $v) {
                 $done_icon = '';
                 if ($v->status != 0) {
                     $done_icon = '<i class="fa fa-check green"></i> ';
                 }
                 $data['data'][] = array(
-                                        /*$v->id,*/
-                                        $done_icon.$v->product_name,
-                                        '<a class="btn btn-info btn-xs" href="javascript:;" onClick="xwb.viewAttachmentPreview('.$v->id.')"><i class="fa fa-file-image-o"></i> '.lang('btn_attachment').'</a>',
-                                        $v->product_description,
-                                        $v->supplier,
-                                        $v->quantity,
-                                        number_format($v->unit_price, 2, '.', ','),
-                                        number_format(($v->unit_price * $v->quantity), 2, '.', ','),
-                                        '<a class="btn btn-danger btn-xs" href="javascript:;" onClick="xwb.deleteItem('.$v->id.')"><i class="fa fa-remove"></i> '.lang('btn_delete').'</a>'
-                                        );
+                    /*$v->id,*/
+                    $done_icon . $v->product_name,
+                    '<a class="btn btn-info btn-xs" href="javascript:;" onClick="xwb.viewAttachmentPreview(' . $v->id . ')"><i class="fa fa-file-image-o"></i> ' . lang('btn_attachment') . '</a>',
+                    $v->product_description,
+                    $v->supplier,
+                    $v->quantity,
+                    number_format($v->unit_price, 2, '.', ','),
+                    number_format(($v->unit_price * $v->quantity), 2, '.', ','),
+                    '<a class="btn btn-danger btn-xs" href="javascript:;" onClick="xwb.deleteItem(' . $v->id . ')"><i class="fa fa-remove"></i> ' . lang('btn_delete') . '</a>'
+                );
             }
         }
         echo $this->xwbJsonEncode($data);
@@ -956,10 +976,10 @@ class Xwb_request extends XWB_purchasing_base
         } else {
             $posts = $this->input->post();
             $data = array(
-                        'status' => 3,
-                        'req_cat' => $posts['req_cat'],
-                        'date_updated' => date('Y-m-d H:i:s')
-                        );
+                'status' => 3,
+                'req_cat' => $posts['req_cat'],
+                'date_updated' => date('Y-m-d H:i:s')
+            );
             $this->db->where('id', $posts['request_id']);
             $this->db->update('request_list', $data);
 
@@ -967,26 +987,26 @@ class Xwb_request extends XWB_purchasing_base
             $c = $this->Canvasser->getCanvassByRequest($posts['request_id'])->row();
             if (is_null($c)) {
                 $db_data = array(
-                    'request_id' =>$posts['request_id'],
-                    'user_id' =>$posts['user_id'],
+                    'request_id' => $posts['request_id'],
+                    'user_id' => $posts['user_id'],
                     'user_from' => $this->log_user_data->user_id,
-                    'date_updated' =>date('Y-m-d H:i:s'),
+                    'date_updated' => date('Y-m-d H:i:s'),
 
                 );
                 $res = $this->db->insert('canvass', $db_data);
             } else {
                 $db_data = array(
-                    'user_id' =>$posts['user_id'],
-                    'date_updated' =>date('Y-m-d H:i:s'),
+                    'user_id' => $posts['user_id'],
+                    'date_updated' => date('Y-m-d H:i:s'),
                 );
                 $this->db->where('id', $c->id);
                 $res = $this->db->update('canvass', $db_data);
             }
 
-            
+
 
             $this->load->model('user/User_model', 'User');
-            
+
 
 
             /**
@@ -1000,10 +1020,10 @@ class Xwb_request extends XWB_purchasing_base
              * item
              */
             $shortcodes = array(
-                    'user_to' => $posts['user_id'],
-                    'message' => $this->input->post('reason'),
-                    'request_id' => $posts['request_id'],
-                );
+                'user_to' => $posts['user_id'],
+                'message' => $this->input->post('reason'),
+                'request_id' => $posts['request_id'],
+            );
 
             $this->xwb_purchasing->setShortCodes($shortcodes);
 
@@ -1026,7 +1046,7 @@ class Xwb_request extends XWB_purchasing_base
             }
         }
 
-    
+
         echo $this->xwbJsonEncode($data);
     }
 
@@ -1049,14 +1069,14 @@ class Xwb_request extends XWB_purchasing_base
         } else {
             $posts = $this->input->post();
             $data = array(
-                        'status' => 4,
-                        'admin_note' => $posts['reason'],
-                        'date_updated' => date('Y-m-d H:i:s')
-                        );
+                'status' => 4,
+                'admin_note' => $posts['reason'],
+                'date_updated' => date('Y-m-d H:i:s')
+            );
             $this->db->where('id', $posts['request_id']);
             $this->db->update('request_list', $data);
             $res = $this->db->affected_rows();
-            if ($res>0) {
+            if ($res > 0) {
                 $data['status'] = true;
                 $data['message'] = lang('msg_req_denied');
             } else {
@@ -1088,10 +1108,10 @@ class Xwb_request extends XWB_purchasing_base
         } else {
             $posts = $this->input->post();
             $data = array(
-                        'status' => 2,
-                        'dept_head_note' => $posts['dept_head_note'],
-                        'date_updated' => date('Y-m-d H:i:s')
-                        );
+                'status' => 2,
+                'dept_head_note' => $posts['dept_head_note'],
+                'date_updated' => date('Y-m-d H:i:s')
+            );
             $this->db->where('id', $posts['request_id']);
             $res = $this->db->update('request_list', $data);
             if ($res) {
@@ -1114,7 +1134,7 @@ class Xwb_request extends XWB_purchasing_base
      */
     public function new_list()
     {
-        $this->redirectUser(array('admin','board'));
+        $this->redirectUser(array('admin', 'board'));
         $this->load->model('product/Product_model', 'Product');
         $this->load->model('request_category/Request_category_model', 'ReqCat');
 
@@ -1137,9 +1157,9 @@ class Xwb_request extends XWB_purchasing_base
      */
     public function print_request($request_id)
     {
-        $this->redirectUser(array('admin','members','canvasser','budget','auditor','property','board'));
+        $this->redirectUser(array('admin', 'members', 'canvasser', 'budget', 'auditor', 'property', 'board'));
 
-        if ($this->log_user_data->group_name!='members') {
+        if ($this->log_user_data->group_name != 'members') {
             $this->print_reqadmin($request_id);
         } else {
             $this->print_requisitioner($request_id);
@@ -1154,7 +1174,7 @@ class Xwb_request extends XWB_purchasing_base
      */
     public function print_reqadmin($request_id)
     {
-        $this->redirectUser(array('admin','members','canvasser','budget','auditor','board'));
+        $this->redirectUser(array('admin', 'members', 'canvasser', 'budget', 'auditor', 'board'));
         $this->load->model('User/User_model', 'User');
         $this->load->model('Request/Request_model', 'Request');
         $this->load->model('Budget/Budget_model', 'Budget');
@@ -1167,15 +1187,15 @@ class Xwb_request extends XWB_purchasing_base
 
 
         $c = $this->Canvasser->getCanvassByRequest($request_id)->row();
-        
+
         $items = $this->Request->getItemsPerRequestCanvasser($request_id)->result();
         $request = $this->Request->getRequest($request_id)->row();
         $requestor = $this->User->getUser($request->user_id)->row();
         $this->load->library('pdf');
         $filename = "request_$request_id";
-        $pdfFilePath = FCPATH."downloads/pdf/$filename.pdf";
+        $pdfFilePath = FCPATH . "downloads/pdf/$filename.pdf";
         $pdf = $this->pdf->load();
-        $stylesheet = file_get_contents($this->config->item('assets_path').'css/pdfstyle.css');
+        $stylesheet = file_get_contents($this->config->item('assets_path') . 'css/pdfstyle.css');
 
         $req_approval = $this->Request->getReqForApprovalByRequest($request_id)->result();
         $budget = $this->Budget->getBudgetByRequest($request_id)->row();
@@ -1197,7 +1217,7 @@ class Xwb_request extends XWB_purchasing_base
             $canvass_date = date('F j, Y, g:i a', strtotime($canvasser->date_updated));
         }
 
-        if ($request->status==13) {
+        if ($request->status == 13) {
             $approve_purchase_by = $this->User->getUser($request->approve_purchase_by)->row();
             $approve_purchase_date = date('F j, Y, g:i a', strtotime($canvasser->date_updated));
         } else {
@@ -1207,11 +1227,11 @@ class Xwb_request extends XWB_purchasing_base
         $res_po = $this->PO->getPOByRequest($request->id)->row();
         //$pdf->SetDisplayMode('fullpage');
         ob_start();
-        ?>
+?>
         <h3 class="text-center"><?php echo getConfig('company_name'); ?></h3>
         <p class="text-center"><?php echo $branches; ?></p>
         <p class="text-center"><?php echo lang('pdf_heading_purchasing_dept'); ?></p>
-        
+
         <div class="received-date">
             <h5><?php echo lang('pdf_recieved'); ?></h5>
             <p><?php echo lang('pdf_po_date_label'); ?>: _______________</p>
@@ -1221,7 +1241,7 @@ class Xwb_request extends XWB_purchasing_base
         <hr />
         <h3 class="text-center"><?php echo lang('pdf_purch_req_slip'); ?></h3>
         <p class="underline width-150 pull-left clearfix"><b><?php echo lang('pdf_pr_num'); ?>: </b><?php echo sprintf('PR-%08d', $request->id); ?></p>
-        <p class="underline width-150 pull-left clearfix"><b><?php echo lang('pdf_po_num'); ?>: </b><?php echo ($res_po==null?"":sprintf('PO-%08d', $res_po->id)); ?></p>
+        <p class="underline width-150 pull-left clearfix"><b><?php echo lang('pdf_po_num'); ?>: </b><?php echo ($res_po == null ? "" : sprintf('PO-%08d', $res_po->id)); ?></p>
         <br />
         <br />
         <table border="1" cellpadding="1" cellspacing="0">
@@ -1239,22 +1259,42 @@ class Xwb_request extends XWB_purchasing_base
                     <th align="center" width="20%" rowspan="4">
                         <?php echo lang('dt_heading_item_description'); ?>
                     </th>
-                    <th colspan="4" width="65%"><h5><?php echo lang('pdf_purch_use_only'); ?></h5></th>
+                    <th colspan="4" width="65%">
+                        <h5><?php echo lang('pdf_purch_use_only'); ?></h5>
+                    </th>
                 </tr>
                 <tr>
-                    <th colspan="4" width="65%"><h5><?php echo lang('pdf_quotations_label'); ?></h5></th>
+                    <th colspan="4" width="65%">
+                        <h5><?php echo lang('pdf_quotations_label'); ?></h5>
+                    </th>
                 </tr>
                 <tr>
-                    <th width="16.25%"><h5><?php echo lang('pdf_name_supplier_unit'); ?></h5></th>
-                    <th width="16.25%"><h5><?php echo lang('pdf_name_supplier_unit'); ?></h5></th>
-                    <th width="16.25%"><h5><?php echo lang('pdf_name_supplier_unit'); ?></h5></th>
-                    <th width="16.25%"><h5><?php echo lang('pdf_name_supplier_unit'); ?></h5></th>
+                    <th width="16.25%">
+                        <h5><?php echo lang('pdf_name_supplier_unit'); ?></h5>
+                    </th>
+                    <th width="16.25%">
+                        <h5><?php echo lang('pdf_name_supplier_unit'); ?></h5>
+                    </th>
+                    <th width="16.25%">
+                        <h5><?php echo lang('pdf_name_supplier_unit'); ?></h5>
+                    </th>
+                    <th width="16.25%">
+                        <h5><?php echo lang('pdf_name_supplier_unit'); ?></h5>
+                    </th>
                 </tr>
                 <tr>
-                    <th width="16.25%"><h5> &nbsp; </h5></th>
-                    <th width="16.25%"><h5> &nbsp; </h5></th>
-                    <th width="16.25%"><h5> &nbsp; </h5></th>
-                    <th width="16.25%"><h5> &nbsp; </h5></th>
+                    <th width="16.25%">
+                        <h5> &nbsp; </h5>
+                    </th>
+                    <th width="16.25%">
+                        <h5> &nbsp; </h5>
+                    </th>
+                    <th width="16.25%">
+                        <h5> &nbsp; </h5>
+                    </th>
+                    <th width="16.25%">
+                        <h5> &nbsp; </h5>
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -1264,7 +1304,7 @@ class Xwb_request extends XWB_purchasing_base
                 $column_1 = $column_2 = $column_3 = $column_4 = 0;
                 foreach ($items as $key => $value) :
                 ?>
-                <?php
+                    <?php
                     $supplier = getSuplliersFromCanvassed($value->request_id, $value->product_id, $value->product_name);
                     $supplier_num = $supplier->num_rows();
                     $supplier = $supplier->result();
@@ -1272,12 +1312,12 @@ class Xwb_request extends XWB_purchasing_base
                     $supplier_2 = null;
                     $supplier_3 = null;
                     $supplier_4 = null;
-                for ($i=0; $i < $supplier_num; $i++) {
-                    $post_var = $i+1;
-                    ${'supplier_'.$post_var} = $supplier[$i];
-                }
+                    for ($i = 0; $i < $supplier_num; $i++) {
+                        $post_var = $i + 1;
+                        ${'supplier_' . $post_var} = $supplier[$i];
+                    }
                     $row_total = 0;
-                ?>
+                    ?>
                     <tr>
 
                         <!-- <td><?php echo $counter; ?></td> -->
@@ -1285,102 +1325,102 @@ class Xwb_request extends XWB_purchasing_base
                         <td><?php echo $value->unit_measurement; ?></td>
                         <td><?php echo $value->product_name; ?></td>
                         <td>
-                        <p class="label">
-                            <?php echo $value->product_description; ?>
-                        </p>
+                            <p class="label">
+                                <?php echo $value->product_description; ?>
+                            </p>
                         </td>
                         <td>
                             <?php
-                                $supplier = (isset($supplier_1)?$supplier_1:null);
-                                $cp_status = (is_null($supplier)?null:$supplier->cp_status);
-                                $po_item_id = ($cp_status == null?'new1_'.$value->id:$supplier->id.'_'.$supplier->cp_id);
-                                $supplier_id = (is_null($supplier)?null:$supplier->supplier_id);
+                            $supplier = (isset($supplier_1) ? $supplier_1 : null);
+                            $cp_status = (is_null($supplier) ? null : $supplier->cp_status);
+                            $po_item_id = ($cp_status == null ? 'new1_' . $value->id : $supplier->id . '_' . $supplier->cp_id);
+                            $supplier_id = (is_null($supplier) ? null : $supplier->supplier_id);
 
-                                $supplier_name = (is_null($supplier)?null:$supplier->supplier);
-                                $unit_price = (is_null($supplier)?0:$supplier->price);
-                                $quantity = (is_null($supplier)?0:$supplier->quantity);
-                                $row_total = $row_total + ($unit_price * $quantity);
-                                $column_1 = $column_1 + ($cp_status==1?($unit_price * $quantity):0);
+                            $supplier_name = (is_null($supplier) ? null : $supplier->supplier);
+                            $unit_price = (is_null($supplier) ? 0 : $supplier->price);
+                            $quantity = (is_null($supplier) ? 0 : $supplier->quantity);
+                            $row_total = $row_total + ($unit_price * $quantity);
+                            $column_1 = $column_1 + ($cp_status == 1 ? ($unit_price * $quantity) : 0);
                             ?>
                             <?php
-                            if (($unit_price*$quantity) != 0) :
+                            if (($unit_price * $quantity) != 0) :
                             ?>
-                            <p class="label text-center"><?php echo $cp_status==1?'<b class="text-12">&#10004;</b>':''; ?><?php echo $supplier_name; ?> </p>
-                            <p class="label"><?php echo number_format($unit_price, 2, '.', ',')." * ".$quantity; ?></p>
+                                <p class="label text-center"><?php echo $cp_status == 1 ? '<b class="text-12">&#10004;</b>' : ''; ?><?php echo $supplier_name; ?> </p>
+                                <p class="label"><?php echo number_format($unit_price, 2, '.', ',') . " * " . $quantity; ?></p>
                             <?php
                             endif;
                             ?>
                         </td>
-                    
+
                         <td>
                             <?php
-                                $supplier = (isset($supplier_2)?$supplier_2:null);
-                                $cp_status = (is_null($supplier)?null:$supplier->cp_status);
-                                $po_item_id = ($cp_status == null?'new2_'.$value->id:$supplier->id.'_'.$supplier->cp_id);
-                                $supplier_id = (is_null($supplier)?null:$supplier->supplier_id);
+                            $supplier = (isset($supplier_2) ? $supplier_2 : null);
+                            $cp_status = (is_null($supplier) ? null : $supplier->cp_status);
+                            $po_item_id = ($cp_status == null ? 'new2_' . $value->id : $supplier->id . '_' . $supplier->cp_id);
+                            $supplier_id = (is_null($supplier) ? null : $supplier->supplier_id);
 
-                                $supplier_name = (is_null($supplier)?null:$supplier->supplier);
-                                $unit_price = (is_null($supplier)?0:$supplier->price);
-                                $quantity = (is_null($supplier)?0:$supplier->quantity);
-                                $row_total = $row_total + ($unit_price * $quantity);
-                                $column_2 = $column_2 + ($cp_status==1?($unit_price * $quantity):0);
+                            $supplier_name = (is_null($supplier) ? null : $supplier->supplier);
+                            $unit_price = (is_null($supplier) ? 0 : $supplier->price);
+                            $quantity = (is_null($supplier) ? 0 : $supplier->quantity);
+                            $row_total = $row_total + ($unit_price * $quantity);
+                            $column_2 = $column_2 + ($cp_status == 1 ? ($unit_price * $quantity) : 0);
                             ?>
                             <?php
-                            if (($unit_price*$quantity) != 0) :
+                            if (($unit_price * $quantity) != 0) :
                             ?>
-                            <p class="label text-center"><?php echo $cp_status==1?'<b class="text-12">&#10004;</b>':''; ?><?php echo $supplier_name; ?> </p>
-                            <p class="label"><?php echo number_format($unit_price, 2, '.', ',')." * ".$quantity; ?></p>
-                            <?php
-                            endif;
-                            ?>
-                        </td>
-                        <td>
-                            <?php
-                                $supplier = (isset($supplier_3)?$supplier_3:null);
-                                $cp_status = (is_null($supplier)?null:$supplier->cp_status);
-                                $po_item_id = ($cp_status  == null?'new3_'.$value->id:$supplier->id.'_'.$supplier->cp_id);
-                                $supplier_id = (is_null($supplier)?null:$supplier->supplier_id);
-
-                                $supplier_name = (is_null($supplier)?null:$supplier->supplier);
-                                $unit_price = (is_null($supplier)?0:$supplier->price);
-                                $quantity = (is_null($supplier)?0:$supplier->quantity);
-                                $row_total = $row_total + ($unit_price * $quantity);
-                                $column_3 = $column_3 + ($cp_status==1?($unit_price * $quantity):0);
-                            ?>
-                            <?php
-                            if (($unit_price*$quantity) != 0) :
-                            ?>
-                            <p class="label text-center"><?php echo $cp_status==1?'<b class="text-12">&#10004;</b>':''; ?><?php echo $supplier_name; ?> </p>
-                            <p class="label"><?php echo number_format($unit_price, 2, '.', ',')." * ".$quantity; ?></p>
+                                <p class="label text-center"><?php echo $cp_status == 1 ? '<b class="text-12">&#10004;</b>' : ''; ?><?php echo $supplier_name; ?> </p>
+                                <p class="label"><?php echo number_format($unit_price, 2, '.', ',') . " * " . $quantity; ?></p>
                             <?php
                             endif;
                             ?>
                         </td>
                         <td>
                             <?php
-                                $supplier = (isset($supplier_4)?$supplier_4:null);
-                                $cp_status = (is_null($supplier)?null:$supplier->cp_status);
-                                $po_item_id = ($cp_status == null?'new4_'.$value->id:$supplier->id.'_'.$supplier->cp_id);
-                                $supplier_id = (is_null($supplier)?null:$supplier->supplier_id);
-                                
-                                $supplier_name = (is_null($supplier)?null:$supplier->supplier);
-                                $unit_price = (is_null($supplier)?0:$supplier->price);
-                                $quantity = (is_null($supplier)?0:$supplier->quantity);
-                                $row_total = $row_total + ($unit_price * $quantity);
-                                $column_4 = $column_4 + ($cp_status==1?($unit_price * $quantity):0);
+                            $supplier = (isset($supplier_3) ? $supplier_3 : null);
+                            $cp_status = (is_null($supplier) ? null : $supplier->cp_status);
+                            $po_item_id = ($cp_status  == null ? 'new3_' . $value->id : $supplier->id . '_' . $supplier->cp_id);
+                            $supplier_id = (is_null($supplier) ? null : $supplier->supplier_id);
+
+                            $supplier_name = (is_null($supplier) ? null : $supplier->supplier);
+                            $unit_price = (is_null($supplier) ? 0 : $supplier->price);
+                            $quantity = (is_null($supplier) ? 0 : $supplier->quantity);
+                            $row_total = $row_total + ($unit_price * $quantity);
+                            $column_3 = $column_3 + ($cp_status == 1 ? ($unit_price * $quantity) : 0);
                             ?>
                             <?php
-                            if (($unit_price*$quantity) != 0) :
+                            if (($unit_price * $quantity) != 0) :
                             ?>
-                            <p class="label text-center"><?php echo $cp_status==1?'<b class="text-12">&#10004;</b>':''; ?><?php echo $supplier_name; ?> </p>
-                            <p class="label"><?php echo number_format($unit_price, 2, '.', ',')." * ".$quantity; ?></p>
+                                <p class="label text-center"><?php echo $cp_status == 1 ? '<b class="text-12">&#10004;</b>' : ''; ?><?php echo $supplier_name; ?> </p>
+                                <p class="label"><?php echo number_format($unit_price, 2, '.', ',') . " * " . $quantity; ?></p>
+                            <?php
+                            endif;
+                            ?>
+                        </td>
+                        <td>
+                            <?php
+                            $supplier = (isset($supplier_4) ? $supplier_4 : null);
+                            $cp_status = (is_null($supplier) ? null : $supplier->cp_status);
+                            $po_item_id = ($cp_status == null ? 'new4_' . $value->id : $supplier->id . '_' . $supplier->cp_id);
+                            $supplier_id = (is_null($supplier) ? null : $supplier->supplier_id);
+
+                            $supplier_name = (is_null($supplier) ? null : $supplier->supplier);
+                            $unit_price = (is_null($supplier) ? 0 : $supplier->price);
+                            $quantity = (is_null($supplier) ? 0 : $supplier->quantity);
+                            $row_total = $row_total + ($unit_price * $quantity);
+                            $column_4 = $column_4 + ($cp_status == 1 ? ($unit_price * $quantity) : 0);
+                            ?>
+                            <?php
+                            if (($unit_price * $quantity) != 0) :
+                            ?>
+                                <p class="label text-center"><?php echo $cp_status == 1 ? '<b class="text-12">&#10004;</b>' : ''; ?><?php echo $supplier_name; ?> </p>
+                                <p class="label"><?php echo number_format($unit_price, 2, '.', ',') . " * " . $quantity; ?></p>
                             <?php
                             endif;
                             ?>
                         </td>
                     </tr>
                 <?php
-                $counter++;
+                    $counter++;
                 endforeach; ?>
                 <tr></tr>
             </tbody>
@@ -1397,7 +1437,7 @@ class Xwb_request extends XWB_purchasing_base
                 </tr>
                 <tr bgcolor="#bcfbff">
                     <td colspan="7" align="right"><strong><?php echo lang('pdf_total_label'); ?>: </strong></td>
-                    <td><strong><?php echo number_format((is_null($c)?0:$c->total_amount), 2, '.', ','); ?></strong></td>
+                    <td><strong><?php echo number_format((is_null($c) ? 0 : $c->total_amount), 2, '.', ','); ?></strong></td>
                 </tr>
             </tfoot>
         </table>
@@ -1407,15 +1447,15 @@ class Xwb_request extends XWB_purchasing_base
         <div class="col-md-4">
             <div class="border">
                 <p><b><?php echo lang('reqname_purpose'); ?>:</b></p>
-                <?php echo $request->purpose;?>
+                <?php echo $request->purpose; ?>
                 <hr />
                 <p><b><?php echo lang('pdf_requested_by'); ?>:</b></p>
                 <br />
-                <p class="underline"><?php echo ucwords($requestor->first_name." ".$requestor->last_name); ?></p>
+                <p class="underline"><?php echo ucwords($requestor->first_name . " " . $requestor->last_name); ?></p>
                 <p class="label text-center"><?php echo lang('pdf_sign_over_printed'); ?></p>
                 <hr />
                 <p class="text-10"><b><?php echo lang('pdf_dept_branch'); ?>:</b></p>
-                <p><?php echo $requestor->dep_description." / ".$requestor->branch_description;?></p>
+                <p><?php echo $requestor->dep_description . " / " . $requestor->branch_description; ?></p>
                 <hr />
                 <p><b><?php echo lang('date_prepared'); ?>:</b></p>
 
@@ -1425,7 +1465,7 @@ class Xwb_request extends XWB_purchasing_base
                 <p><b><?php echo lang('pdf_recommending_approval'); ?>:</b></p>
                 <?php foreach ($req_approval as $key => $value) : ?>
                     <br />
-                    <p class="upperline text-center text-10"><?php echo ucwords($value->head_name)." / ".$value->head_department; ?></p>
+                    <p class="upperline text-center text-10"><?php echo ucwords($value->head_name) . " / " . $value->head_department; ?></p>
                 <?php endforeach; ?>
 
                 <p class="upperline label text-center"><?php echo lang('pdf_recommending_approval'); ?></p>
@@ -1442,7 +1482,7 @@ class Xwb_request extends XWB_purchasing_base
                 </div>
                 <br />
                 <p><b><?php echo lang('pdf_budget_certified_by'); ?>:</b></p><br />
-                <p class="text-center"><?php echo (getConfig('budget_certified_by')==""?$budget_name:getConfig('budget_certified_by')); ?></p>
+                <p class="text-center"><?php echo (getConfig('budget_certified_by') == "" ? $budget_name : getConfig('budget_certified_by')); ?></p>
                 <p class="upperline text-center text-10"><?php echo lang('pdf_head_budget_dept'); ?></p>
                 <hr />
                 <p class="underline"><b><?php echo lang('pdf_po_date_label'); ?>: </b> <?php echo $budget_date; ?></p>
@@ -1457,7 +1497,7 @@ class Xwb_request extends XWB_purchasing_base
                 <p class="upperline text-center text-10"><?php echo lang('pdf_heading_purchasing_dept'); ?></p>
 
                 <hr />
-                <p class="underline"><b><?php echo lang('pdf_po_date_label'); ?>:</b><?php echo $canvass_date;?></p><br />
+                <p class="underline"><b><?php echo lang('pdf_po_date_label'); ?>:</b><?php echo $canvass_date; ?></p><br />
                 <br />
                 <hr />
                 <p><b><?php echo lang('pdf_approve_purchased_by'); ?>:</b></p><br />
@@ -1471,7 +1511,7 @@ class Xwb_request extends XWB_purchasing_base
         </div>
 
 
-        <?php
+    <?php
         $html = ob_get_contents();
         ob_end_clean();
         $pdf->SetTitle($request->request_name);
@@ -1489,7 +1529,7 @@ class Xwb_request extends XWB_purchasing_base
      */
     public function print_requisitioner($request_id)
     {
-        $this->redirectUser(array('admin','members','canvasser','budget','auditor','board'));
+        $this->redirectUser(array('admin', 'members', 'canvasser', 'budget', 'auditor', 'board'));
         $this->load->model('user/User_model', 'User');
         $this->load->model('request/Request_model', 'Request');
         $this->load->model('budget/Budget_model', 'Budget');
@@ -1501,15 +1541,15 @@ class Xwb_request extends XWB_purchasing_base
         $branches = array_column($branches, 'description');
         $branches = implode(' * ', $branches);
 
-        
+
         $items = $this->Request->getItemsPerRequestCanvasser($request_id)->result();
         $request = $this->Request->getRequest($request_id)->row();
         $requestor = $this->User->getUser($request->user_id)->row();
         $this->load->library('pdf');
         $filename = "request_$request_id";
-        $pdfFilePath = FCPATH."downloads/pdf/$filename.pdf";
+        $pdfFilePath = FCPATH . "downloads/pdf/$filename.pdf";
         $pdf = $this->pdf->load();
-        $stylesheet = file_get_contents($this->config->item('assets_path').'css/pdfstyle.css');
+        $stylesheet = file_get_contents($this->config->item('assets_path') . 'css/pdfstyle.css');
 
         $req_approval = $this->Request->getReqForApprovalByRequest($request_id)->result();
         $budget = $this->Budget->getBudgetByRequest($request_id)->row();
@@ -1530,7 +1570,7 @@ class Xwb_request extends XWB_purchasing_base
             $canvass_date = date('F j, Y, g:i a', strtotime($canvasser->date_updated));
         }
 
-        if ($request->status==13) {
+        if ($request->status == 13) {
             $approve_purchase_by = $this->User->getUser($request->approve_purchase_by)->row();
             $approve_purchase_date = date('F j, Y, g:i a', strtotime($canvasser->date_updated));
         } else {
@@ -1539,11 +1579,11 @@ class Xwb_request extends XWB_purchasing_base
         }
         $res_po = $this->PO->getPOByRequest($request->id)->row();
         ob_start();
-        ?>
+    ?>
         <h3 class="text-center"><?php echo getConfig('company_name'); ?></h3>
         <p class="text-center"><?php echo $branches; ?></p>
         <p class="text-center"><?php echo lang('pdf_heading_purchasing_dept'); ?></p>
-        
+
         <div class="received-date">
             <h5><?php echo lang('pdf_recieved'); ?></h5>
             <p><?php echo lang('pdf_po_date_label'); ?>: _______________</p>
@@ -1553,7 +1593,7 @@ class Xwb_request extends XWB_purchasing_base
         <hr />
         <h3 class="text-center"><?php echo lang('pdf_purch_req_slip'); ?></h3>
         <p class="underline width-150 pull-left clearfix"><b><?php echo lang('pdf_pr_num'); ?>: </b><?php echo sprintf('PR-%08d', $request->id); ?></p>
-        <p class="underline width-150 pull-left clearfix"><b><?php echo lang('pdf_po_num'); ?>: </b><?php echo ($res_po==null?"":sprintf('PO-%08d', $res_po->id)); ?></p>
+        <p class="underline width-150 pull-left clearfix"><b><?php echo lang('pdf_po_num'); ?>: </b><?php echo ($res_po == null ? "" : sprintf('PO-%08d', $res_po->id)); ?></p>
         <br />
         <br />
         <table border="1" cellpadding="1" cellspacing="0">
@@ -1571,22 +1611,42 @@ class Xwb_request extends XWB_purchasing_base
                     <th align="center" width="20%" rowspan="4">
                         <?php echo lang('dt_heading_item_description'); ?>
                     </th>
-                    <th colspan="4" width="65%"><h5><?php echo lang('pdf_purch_use_only'); ?></h5></th>
+                    <th colspan="4" width="65%">
+                        <h5><?php echo lang('pdf_purch_use_only'); ?></h5>
+                    </th>
                 </tr>
                 <tr>
-                    <th colspan="4" width="65%"><h5><?php echo lang('pdf_quotations_label'); ?></h5></th>
+                    <th colspan="4" width="65%">
+                        <h5><?php echo lang('pdf_quotations_label'); ?></h5>
+                    </th>
                 </tr>
                 <tr>
-                    <th width="16.25%"><h5><?php echo lang('pdf_name_supplier_unit'); ?></h5></th>
-                    <th width="16.25%"><h5><?php echo lang('pdf_name_supplier_unit'); ?></h5></th>
-                    <th width="16.25%"><h5><?php echo lang('pdf_name_supplier_unit'); ?></h5></th>
-                    <th width="16.25%"><h5><?php echo lang('pdf_name_supplier_unit'); ?></h5></th>
+                    <th width="16.25%">
+                        <h5><?php echo lang('pdf_name_supplier_unit'); ?></h5>
+                    </th>
+                    <th width="16.25%">
+                        <h5><?php echo lang('pdf_name_supplier_unit'); ?></h5>
+                    </th>
+                    <th width="16.25%">
+                        <h5><?php echo lang('pdf_name_supplier_unit'); ?></h5>
+                    </th>
+                    <th width="16.25%">
+                        <h5><?php echo lang('pdf_name_supplier_unit'); ?></h5>
+                    </th>
                 </tr>
                 <tr>
-                    <th width="16.25%"><h5> &nbsp; </h5></th>
-                    <th width="16.25%"><h5> &nbsp; </h5></th>
-                    <th width="16.25%"><h5> &nbsp; </h5></th>
-                    <th width="16.25%"><h5> &nbsp; </h5></th>
+                    <th width="16.25%">
+                        <h5> &nbsp; </h5>
+                    </th>
+                    <th width="16.25%">
+                        <h5> &nbsp; </h5>
+                    </th>
+                    <th width="16.25%">
+                        <h5> &nbsp; </h5>
+                    </th>
+                    <th width="16.25%">
+                        <h5> &nbsp; </h5>
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -1595,7 +1655,7 @@ class Xwb_request extends XWB_purchasing_base
                 $sum = 0;
                 foreach ($items as $key => $value) :
                 ?>
-                <?php
+                    <?php
                     $supplier = getSuplliersFromCanvassed($value->request_id, $value->product_id, $value->product_name);
                     $supplier_num = $supplier->num_rows();
                     $supplier = $supplier->result();
@@ -1603,12 +1663,12 @@ class Xwb_request extends XWB_purchasing_base
                     $supplier_2 = null;
                     $supplier_3 = null;
                     $supplier_4 = null;
-                for ($i=0; $i < $supplier_num; $i++) {
-                    $post_var = $i+1;
-                    ${'supplier_'.$post_var} = $supplier[$i];
-                }
+                    for ($i = 0; $i < $supplier_num; $i++) {
+                        $post_var = $i + 1;
+                        ${'supplier_' . $post_var} = $supplier[$i];
+                    }
                     $row_total = 0;
-                ?>
+                    ?>
                     <tr>
 
                         <!-- <td><?php echo $counter; ?></td> -->
@@ -1616,94 +1676,94 @@ class Xwb_request extends XWB_purchasing_base
                         <td><?php echo $value->unit_measurement; ?></td>
                         <td><?php echo $value->product_name; ?></td>
                         <td>
-                        <p class="label">
-                            <?php echo $value->product_description; ?>
-                        </p>
+                            <p class="label">
+                                <?php echo $value->product_description; ?>
+                            </p>
                         </td>
                         <td>
                             <?php
-                                $supplier = (isset($supplier_1)?$supplier_1:null);
-                                $cp_status = (is_null($supplier)?null:$supplier->cp_status);
-                                $po_item_id = ($cp_status == null?'new1_'.$value->id:$supplier->id.'_'.$supplier->cp_id);
-                                $supplier_id = (is_null($supplier)?null:$supplier->supplier_id);
+                            $supplier = (isset($supplier_1) ? $supplier_1 : null);
+                            $cp_status = (is_null($supplier) ? null : $supplier->cp_status);
+                            $po_item_id = ($cp_status == null ? 'new1_' . $value->id : $supplier->id . '_' . $supplier->cp_id);
+                            $supplier_id = (is_null($supplier) ? null : $supplier->supplier_id);
 
-                                $supplier_name = (is_null($supplier)?null:$supplier->supplier);
-                                $unit_price = (is_null($supplier)?0:$supplier->price);
-                                $quantity = (is_null($supplier)?0:$supplier->quantity);
-                                $row_total = $row_total + ($unit_price * $quantity);
+                            $supplier_name = (is_null($supplier) ? null : $supplier->supplier);
+                            $unit_price = (is_null($supplier) ? 0 : $supplier->price);
+                            $quantity = (is_null($supplier) ? 0 : $supplier->quantity);
+                            $row_total = $row_total + ($unit_price * $quantity);
                             ?>
                             <?php
-                            if (($unit_price*$quantity) != 0) :
+                            if (($unit_price * $quantity) != 0) :
                             ?>
-                            <p class="label text-center"><?php echo $cp_status==1?'<b class="text-12">&#10004;</b>':''; ?><?php echo $supplier_name; ?> </p>
+                                <p class="label text-center"><?php echo $cp_status == 1 ? '<b class="text-12">&#10004;</b>' : ''; ?><?php echo $supplier_name; ?> </p>
                             <?php
                             endif;
                             ?>
                         </td>
-                    
+
                         <td>
                             <?php
-                                $supplier = (isset($supplier_2)?$supplier_2:null);
-                                $cp_status = (is_null($supplier)?null:$supplier->cp_status);
-                                $po_item_id = ($cp_status == null?'new2_'.$value->id:$supplier->id.'_'.$supplier->cp_id);
-                                $supplier_id = (is_null($supplier)?null:$supplier->supplier_id);
+                            $supplier = (isset($supplier_2) ? $supplier_2 : null);
+                            $cp_status = (is_null($supplier) ? null : $supplier->cp_status);
+                            $po_item_id = ($cp_status == null ? 'new2_' . $value->id : $supplier->id . '_' . $supplier->cp_id);
+                            $supplier_id = (is_null($supplier) ? null : $supplier->supplier_id);
 
-                                $supplier_name = (is_null($supplier)?null:$supplier->supplier);
-                                $unit_price = (is_null($supplier)?0:$supplier->price);
-                                $quantity = (is_null($supplier)?0:$supplier->quantity);
-                                $row_total = $row_total + ($unit_price * $quantity);
+                            $supplier_name = (is_null($supplier) ? null : $supplier->supplier);
+                            $unit_price = (is_null($supplier) ? 0 : $supplier->price);
+                            $quantity = (is_null($supplier) ? 0 : $supplier->quantity);
+                            $row_total = $row_total + ($unit_price * $quantity);
                             ?>
                             <?php
-                            if (($unit_price*$quantity) != 0) :
+                            if (($unit_price * $quantity) != 0) :
                             ?>
-                            <p class="label text-center"><?php echo $cp_status==1?'<b class="text-12">&#10004;</b>':''; ?><?php echo $supplier_name; ?> </p>
-                            <?php
-                            endif;
-                            ?>
-                        </td>
-                        <td>
-                            <?php
-                                $supplier = (isset($supplier_3)?$supplier_3:null);
-                                $cp_status = (is_null($supplier)?null:$supplier->cp_status);
-                                $po_item_id = ($cp_status  == null?'new3_'.$value->id:$supplier->id.'_'.$supplier->cp_id);
-                                $supplier_id = (is_null($supplier)?null:$supplier->supplier_id);
-
-                                $supplier_name = (is_null($supplier)?null:$supplier->supplier);
-                                $unit_price = (is_null($supplier)?0:$supplier->price);
-                                $quantity = (is_null($supplier)?0:$supplier->quantity);
-                                $row_total = $row_total + ($unit_price * $quantity);
-                            ?>
-                            <?php
-                            if (($unit_price*$quantity) != 0) :
-                            ?>
-                            <p class="label text-center"><?php echo $cp_status==1?'<b class="text-12">&#10004;</b>':''; ?><?php echo $supplier_name; ?> </p>
+                                <p class="label text-center"><?php echo $cp_status == 1 ? '<b class="text-12">&#10004;</b>' : ''; ?><?php echo $supplier_name; ?> </p>
                             <?php
                             endif;
                             ?>
                         </td>
                         <td>
                             <?php
-                                $supplier = (isset($supplier_4)?$supplier_4:null);
-                                $cp_status = (is_null($supplier)?null:$supplier->cp_status);
-                                $po_item_id = ($cp_status == null?'new4_'.$value->id:$supplier->id.'_'.$supplier->cp_id);
-                                $supplier_id = (is_null($supplier)?null:$supplier->supplier_id);
-                                
-                                $supplier_name = (is_null($supplier)?null:$supplier->supplier);
-                                $unit_price = (is_null($supplier)?0:$supplier->price);
-                                $quantity = (is_null($supplier)?0:$supplier->quantity);
-                                $row_total = $row_total + ($unit_price * $quantity);
+                            $supplier = (isset($supplier_3) ? $supplier_3 : null);
+                            $cp_status = (is_null($supplier) ? null : $supplier->cp_status);
+                            $po_item_id = ($cp_status  == null ? 'new3_' . $value->id : $supplier->id . '_' . $supplier->cp_id);
+                            $supplier_id = (is_null($supplier) ? null : $supplier->supplier_id);
+
+                            $supplier_name = (is_null($supplier) ? null : $supplier->supplier);
+                            $unit_price = (is_null($supplier) ? 0 : $supplier->price);
+                            $quantity = (is_null($supplier) ? 0 : $supplier->quantity);
+                            $row_total = $row_total + ($unit_price * $quantity);
                             ?>
                             <?php
-                            if (($unit_price*$quantity) != 0) :
+                            if (($unit_price * $quantity) != 0) :
                             ?>
-                            <p class="label text-center"><?php echo $cp_status==1?'<b class="text-12">&#10004;</b>':''; ?><?php echo $supplier_name; ?> </p>
+                                <p class="label text-center"><?php echo $cp_status == 1 ? '<b class="text-12">&#10004;</b>' : ''; ?><?php echo $supplier_name; ?> </p>
+                            <?php
+                            endif;
+                            ?>
+                        </td>
+                        <td>
+                            <?php
+                            $supplier = (isset($supplier_4) ? $supplier_4 : null);
+                            $cp_status = (is_null($supplier) ? null : $supplier->cp_status);
+                            $po_item_id = ($cp_status == null ? 'new4_' . $value->id : $supplier->id . '_' . $supplier->cp_id);
+                            $supplier_id = (is_null($supplier) ? null : $supplier->supplier_id);
+
+                            $supplier_name = (is_null($supplier) ? null : $supplier->supplier);
+                            $unit_price = (is_null($supplier) ? 0 : $supplier->price);
+                            $quantity = (is_null($supplier) ? 0 : $supplier->quantity);
+                            $row_total = $row_total + ($unit_price * $quantity);
+                            ?>
+                            <?php
+                            if (($unit_price * $quantity) != 0) :
+                            ?>
+                                <p class="label text-center"><?php echo $cp_status == 1 ? '<b class="text-12">&#10004;</b>' : ''; ?><?php echo $supplier_name; ?> </p>
                             <?php
                             endif;
                             ?>
                         </td>
                     </tr>
                 <?php
-                $counter++;
+                    $counter++;
                 endforeach; ?>
                 <tr></tr>
             </tbody>
@@ -1714,15 +1774,15 @@ class Xwb_request extends XWB_purchasing_base
         <div class="col-md-4">
             <div class="border">
                 <p><b><?php echo lang('reqname_purpose'); ?>:</b></p>
-                <?php echo $request->purpose;?>
+                <?php echo $request->purpose; ?>
                 <hr />
                 <p><b><?php echo lang('pdf_requested_by'); ?>:</b></p>
                 <br />
-                <p class="underline"><?php echo ucwords($requestor->first_name." ".$requestor->last_name); ?></p>
+                <p class="underline"><?php echo ucwords($requestor->first_name . " " . $requestor->last_name); ?></p>
                 <p class="label text-center"><?php echo lang('pdf_sign_over_printed'); ?></p>
                 <hr />
                 <p class="text-10"><b><?php echo lang('pdf_dept_branch'); ?>:</b></p>
-                <p><?php echo $requestor->dep_description." / ".$requestor->branch_description;?></p>
+                <p><?php echo $requestor->dep_description . " / " . $requestor->branch_description; ?></p>
                 <hr />
                 <p><b><?php echo lang('date_prepared'); ?>:</b></p>
 
@@ -1732,7 +1792,7 @@ class Xwb_request extends XWB_purchasing_base
                 <p><b><?php echo lang('pdf_recommending_approval'); ?>:</b></p>
                 <?php foreach ($req_approval as $key => $value) : ?>
                     <br />
-                    <p class="upperline text-center text-10"><?php echo ucwords($value->head_name)." / ".$value->head_department; ?></p>
+                    <p class="upperline text-center text-10"><?php echo ucwords($value->head_name) . " / " . $value->head_department; ?></p>
                 <?php endforeach; ?>
 
                 <p class="upperline label text-center"><?php echo lang('pdf_recommending_approval'); ?></p>
@@ -1749,7 +1809,7 @@ class Xwb_request extends XWB_purchasing_base
                 </div>
                 <br />
                 <p><b><?php echo lang('pdf_budget_certified_by'); ?>:</b></p><br />
-                <p class="text-center"><?php echo (getConfig('budget_certified_by')==""?$budget_name:getConfig('budget_certified_by')) ?></p>
+                <p class="text-center"><?php echo (getConfig('budget_certified_by') == "" ? $budget_name : getConfig('budget_certified_by')) ?></p>
                 <p class="upperline text-center text-10"><?php echo lang('pdf_head_budget_dept'); ?></p>
                 <hr />
                 <p class="underline"><b><?php echo lang('pdf_po_date_label'); ?>: </b> <?php echo $budget_date; ?></p>
@@ -1764,7 +1824,7 @@ class Xwb_request extends XWB_purchasing_base
                 <p class="upperline text-center text-10"><?php echo lang('pdf_heading_purchasing_dept'); ?></p>
 
                 <hr />
-                <p class="underline"><b><?php echo lang('pdf_po_date_label'); ?>:</b><?php echo $canvass_date;?></p><br />
+                <p class="underline"><b><?php echo lang('pdf_po_date_label'); ?>:</b><?php echo $canvass_date; ?></p><br />
                 <br />
                 <hr />
                 <p><b><?php echo lang('pdf_approve_purchased_by'); ?>:</b></p><br />
@@ -1778,7 +1838,7 @@ class Xwb_request extends XWB_purchasing_base
         </div>
 
 
-        <?php
+    <?php
         $html = ob_get_contents();
         ob_end_clean();
         $pdf->SetTitle($request->request_name);
@@ -1804,17 +1864,17 @@ class Xwb_request extends XWB_purchasing_base
 
         $this->redirectUser();
         //default
-        $defaultbtn = '<li><a target="_blank" href="'.base_url('request/print_request/'.$request_id).'">'.lang('btn_print_req').'</a></li>';
-        if ($archived!=1) {
-            $defaultbtn .= '<li><a href="javascript:;" onClick="xwb.supplierSummary('.$request_id.')" >'.lang('btn_supplier_summary').'</a></li>';
+        $defaultbtn = '<li><a target="_blank" href="' . base_url('request/print_request/' . $request_id) . '">' . lang('btn_print_req') . '</a></li>';
+        if ($archived != 1) {
+            $defaultbtn .= '<li><a href="javascript:;" onClick="xwb.supplierSummary(' . $request_id . ')" >' . lang('btn_supplier_summary') . '</a></li>';
         }
 
 
         if (in_array($request->status, $statusItemsDenied)) {
             if ($this->user_id == $request->user_id) {
-                $defaultbtn .= '<li class="has-action"><a href="'.base_url('request/view_request/'.$request_id).'">'.lang('btn_view_request').'</a></li>';
+                $defaultbtn .= '<li class="has-action"><a href="' . base_url('request/view_request/' . $request_id) . '">' . lang('btn_view_request') . '</a></li>';
             } else {
-                $defaultbtn .= '<li><a href="javascript:;" onClick="xwb.view_res('.$request_id.')" >'.lang('btn_view_message').'</a></li>';
+                $defaultbtn .= '<li><a href="javascript:;" onClick="xwb.view_res(' . $request_id . ')" >' . lang('btn_view_message') . '</a></li>';
             }
         }
 
@@ -1827,18 +1887,18 @@ class Xwb_request extends XWB_purchasing_base
             case 2:
                 $btn = $defaultbtn;
                 if ($this->log_user_data->group_name == 'admin') {
-                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.toCanvass('.$request_id.');">'.lang('btn_to_canvass').'</a></li>';
-                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.toRequisitioner('.$request_id.');">'.lang('btn_to_initiator').'</a></li>';
+                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.toCanvass(' . $request_id . ');">' . lang('btn_to_canvass') . '</a></li>';
+                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.toRequisitioner(' . $request_id . ');">' . lang('btn_to_initiator') . '</a></li>';
                 }
                 break;
             case 3:
                 $btn = $defaultbtn;
-                    
+
                 break;
             case 4:
                 $btn = $defaultbtn;
                 if ($this->log_user_data->group_name == 'budget') {
-                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure('.$request_id.');">'.lang('btn_expenditure').'</a></li>';
+                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure(' . $request_id . ');">' . lang('btn_expenditure') . '</a></li>';
                 }
                 break;
             case 5:
@@ -1848,63 +1908,63 @@ class Xwb_request extends XWB_purchasing_base
             case 6:
                 $btn = $defaultbtn;
                 if ($this->log_user_data->group_name == 'budget') {
-                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure('.$request_id.');">'.lang('btn_expenditure').'</a></li>';
-                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.view_budget_msg('.$request_id.');">'.lang('btn_view_message').'</a></li>';
+                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure(' . $request_id . ');">' . lang('btn_expenditure') . '</a></li>';
+                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.view_budget_msg(' . $request_id . ');">' . lang('btn_view_message') . '</a></li>';
                 }
                 break;
             case 7:
                 $btn = $defaultbtn;
                 if ($this->log_user_data->group_name == 'budget') {
-                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure('.$request_id.');">'.lang('btn_expenditure').'</a></li>';
+                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure(' . $request_id . ');">' . lang('btn_expenditure') . '</a></li>';
                 }
                 break;
             case 8:
                 $btn = $defaultbtn;
                 if ($this->log_user_data->group_name == 'admin') {
-                    $btn .= '<li class="has-action"><a href="'.base_url('purchase_order/gen_po/'.$request_id).'">'.lang('btn_gen_po').'</a></li>';
-                    $btn .= '<li class="has-action"><a onClick="xwb.markDone('.$request_id.')" href="javascript:;">'.lang('btn_partial_done').'</a></li>';
+                    $btn .= '<li class="has-action"><a href="' . base_url('purchase_order/gen_po/' . $request_id) . '">' . lang('btn_gen_po') . '</a></li>';
+                    $btn .= '<li class="has-action"><a onClick="xwb.markDone(' . $request_id . ')" href="javascript:;">' . lang('btn_partial_done') . '</a></li>';
                 }
                 if ($this->log_user_data->group_name == 'budget') {
-                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure('.$request_id.');">'.lang('btn_expenditure').'</a></li>';
+                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure(' . $request_id . ');">' . lang('btn_expenditure') . '</a></li>';
                 }
                 break;
             case 9:
                 $btn = $defaultbtn;
                 if ($this->log_user_data->group_name == 'budget') {
-                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure('.$request_id.');">'.lang('btn_expenditure').'</a></li>';
+                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure(' . $request_id . ');">' . lang('btn_expenditure') . '</a></li>';
                 }
                 break;
             case 10:
                 $btn = $defaultbtn;
                 if ($this->log_user_data->group_name == 'budget') {
-                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure('.$request_id.');">'.lang('btn_expenditure').'</a></li>';
+                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure(' . $request_id . ');">' . lang('btn_expenditure') . '</a></li>';
                 }
                 break;
             case 11:
                 $btn = $defaultbtn;
                 if ($this->log_user_data->group_name == 'budget') {
-                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure('.$request_id.');">'.lang('btn_expenditure').'</a></li>';
+                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure(' . $request_id . ');">' . lang('btn_expenditure') . '</a></li>';
                 }
                 break;
             case 12:
                 $btn = $defaultbtn;
                 if ($this->log_user_data->group_name == 'admin') {
-                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.markDone('.$request_id.')">'.lang('btn_done').'</a></li>';
+                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.markDone(' . $request_id . ')">' . lang('btn_done') . '</a></li>';
                 }
                 break;
             case 13:
                 $btn = $defaultbtn;
                 if ($this->log_user_data->group_name == 'admin') {
-                    if ($archived!=1) {
-                        $btn .= '<li><a href="javascript:;" onClick="xwb.archive('.$request_id.')">'.lang('btn_archive').'</a></li>';
+                    if ($archived != 1) {
+                        $btn .= '<li><a href="javascript:;" onClick="xwb.archive(' . $request_id . ')">' . lang('btn_archive') . '</a></li>';
                     }
                 }
                 break;
             case 14:
                 $btn = $defaultbtn;
                 if ($this->log_user_data->group_name == 'admin') {
-                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.assignToBudget('.$request_id.')">'.lang('btn_assign_budget').'</a></li>';
-                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.returnToCanvass('.$request_id.')">'.lang('btn_return_canvasser').'</a></li>';
+                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.assignToBudget(' . $request_id . ')">' . lang('btn_assign_budget') . '</a></li>';
+                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.returnToCanvass(' . $request_id . ')">' . lang('btn_return_canvasser') . '</a></li>';
                 }
 
                 break;
@@ -1915,8 +1975,8 @@ class Xwb_request extends XWB_purchasing_base
             case 16:
                 $btn = $defaultbtn;
                 if ($this->log_user_data->group_name == 'admin') {
-                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.view_response('.$request_id.')">'.lang('btn_view_response').'</a></li>';
-                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.assignToBudget('.$request_id.')">'.lang('btn_assign_budget').'</a></li>';
+                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.view_response(' . $request_id . ')">' . lang('btn_view_response') . '</a></li>';
+                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.assignToBudget(' . $request_id . ')">' . lang('btn_assign_budget') . '</a></li>';
                 }
                 break;
             case 17:
@@ -1931,18 +1991,18 @@ class Xwb_request extends XWB_purchasing_base
             case 20:
                 $btn = $defaultbtn;
                 if ($this->log_user_data->group_name == 'admin') {
-                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.toCanvass('.$request_id.');">'.lang('btn_to_canvass').'</a></li>';
-                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.view_req_msg('.$request_id.')">'.lang('btn_view_response').'</a></li>';
+                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.toCanvass(' . $request_id . ');">' . lang('btn_to_canvass') . '</a></li>';
+                    $btn .= '<li class="has-action"><a href="javascript:;" onClick="xwb.view_req_msg(' . $request_id . ')">' . lang('btn_view_response') . '</a></li>';
                 }
                 break;
             case 21:
                 $btn = $defaultbtn;
                 if ($this->log_user_data->group_name == 'admin') {
-                    $btn .= '<li class="has-action"><a href="'.base_url('purchase_order/gen_po/'.$request_id).'">'.lang('btn_gen_po').'</a></li>';
-                    $btn .= '<li class="has-action"><a onClick="xwb.markDone('.$request_id.')" href="javascript:;">'.lang('btn_partial_done').'</a></li>';
+                    $btn .= '<li class="has-action"><a href="' . base_url('purchase_order/gen_po/' . $request_id) . '">' . lang('btn_gen_po') . '</a></li>';
+                    $btn .= '<li class="has-action"><a onClick="xwb.markDone(' . $request_id . ')" href="javascript:;">' . lang('btn_partial_done') . '</a></li>';
                 }
                 if ($this->log_user_data->group_name == 'budget') {
-                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure('.$request_id.');">'.lang('btn_expenditure').'</a></li>';
+                    $btn .= '<li><a href="javascript:;" onClick="xwb.setExpenditure(' . $request_id . ');">' . lang('btn_expenditure') . '</a></li>';
                 }
                 break;
 
@@ -1954,16 +2014,16 @@ class Xwb_request extends XWB_purchasing_base
 
         if ($archived == 1) {
             if ($this->log_user_data->group_name == 'admin') {
-                        $btn .= '<li><a href="javascript:;" onClick="xwb.unarchive('.$request_id.')">'.lang('btn_unarchive').'</a></li>';
+                $btn .= '<li><a href="javascript:;" onClick="xwb.unarchive(' . $request_id . ')">' . lang('btn_unarchive') . '</a></li>';
             }
         }
-        
+
 
         $action = '<div class="btn-group">
-			<button data-toggle="dropdown" class="btn btn-primary dropdown-toggle btn-sm" type="button" aria-expanded="false">'.lang('dt_action').' <span class="caret"></span>
+			<button data-toggle="dropdown" class="btn btn-primary dropdown-toggle btn-sm" type="button" aria-expanded="false">' . lang('dt_action') . ' <span class="caret"></span>
 			</button>
 			<ul role="menu" class="dropdown-menu">
-				'.$btn.'
+				' . $btn . '
 			</ul>
 		</div>';
         return $action;
@@ -1979,7 +2039,7 @@ class Xwb_request extends XWB_purchasing_base
      */
     public function view_request($request_id)
     {
-        $this->redirectUser(array('members','canvasser','budget','admin','auditor','property','board'));
+        $this->redirectUser(array('members', 'canvasser', 'budget', 'admin', 'auditor', 'property', 'board'));
         $r = $this->Request->getRequest($request_id)->row();
         $data['request'] = $r;
         $data['canEdit'] = $this->canEdit($r);
@@ -1989,7 +2049,7 @@ class Xwb_request extends XWB_purchasing_base
         $data['request_id'] = $request_id;
         $data['page_title'] = $r->request_name; //title of the page
         $data['page_script'] = 'view_request'; // script filename of the page
-        
+
         $this->renderPage('request/view_request', $data);
     }
 
@@ -2001,13 +2061,13 @@ class Xwb_request extends XWB_purchasing_base
      */
     public function edit_request($request_id)
     {
-        $this->redirectUser(array('members','canvasser','budget','admin','auditor','property', 'board'));
+        $this->redirectUser(array('members', 'canvasser', 'budget', 'admin', 'auditor', 'property', 'board'));
         $this->load->model('supplier/Supplier_model', 'Supplier');
         $this->load->model('product/Product_model', 'Product');
 
         $r = $this->Request->getRequest($request_id)->row();
 
-        
+
         if (!$this->canEdit($r)) {
             exit(lang('msg_unauthorize_access'));
         }
@@ -2097,9 +2157,9 @@ class Xwb_request extends XWB_purchasing_base
 
             $posts = $this->input->post();
             $r = $this->Request->getRequest($posts['request_id'])->row();
-            
-            
-            
+
+
+
             $userfrom = $this->User->getUser($r->user_id)->row();
 
 
@@ -2113,13 +2173,13 @@ class Xwb_request extends XWB_purchasing_base
                         'requestor_note' => $posts['response'],
                         'status' => 3,
                         'date_updated' => date('Y-m-d H:i:s')
-                        );
+                    );
                     $this->Budget->updateStatusByRequest($posts['request_id'], $db_data);
 
                     $db_data = array(
                         'status' => 7,
                         'date_updated' => date('Y-m-d H:i:s')
-                        );
+                    );
                     $this->db->where('id', $posts['request_id']);
                     $res = $this->db->update('request_list', $db_data);
 
@@ -2136,10 +2196,10 @@ class Xwb_request extends XWB_purchasing_base
                      */
 
                     $shortcodes = array(
-                            'user_to' => $b->user_id,
-                            'message' => $this->input->post('response'),
-                            'request_id' => $posts['request_id'],
-                        );
+                        'user_to' => $b->user_id,
+                        'message' => $this->input->post('response'),
+                        'request_id' => $posts['request_id'],
+                    );
 
                     $this->xwb_purchasing->setShortCodes($shortcodes);
 
@@ -2159,13 +2219,13 @@ class Xwb_request extends XWB_purchasing_base
                         'requestor_note' => $posts['response'],
                         'status' => 3,
                         'date_updated' => date('Y-m-d H:i:s')
-                        );
+                    );
                     $this->Board->updateStatusByRequest($posts['request_id'], $db_data);
 
                     $db_data = array(
                         'status' => 11,
                         'date_updated' => date('Y-m-d H:i:s')
-                        );
+                    );
                     $this->db->where('id', $posts['request_id']);
                     $res = $this->db->update('request_list', $db_data);
 
@@ -2174,21 +2234,21 @@ class Xwb_request extends XWB_purchasing_base
 
                     foreach ($admins->result() as $aK => $aV) {
                         /**
-                        * Assigning shortcode for email
-                        *
-                        * user_to
-                        * user_from
-                        * request_id
-                        * message
-                        * po
-                        * item
-                        */
+                         * Assigning shortcode for email
+                         *
+                         * user_to
+                         * user_from
+                         * request_id
+                         * message
+                         * po
+                         * item
+                         */
 
                         $shortcodes = array(
-                                'user_to' => $aV->id,
-                                'message' => $this->input->post('pd_remarks'),
-                                'request_id' => $posts['request_id'],
-                            );
+                            'user_to' => $aV->id,
+                            'message' => $this->input->post('pd_remarks'),
+                            'request_id' => $posts['request_id'],
+                        );
 
                         $this->xwb_purchasing->setShortCodes($shortcodes);
 
@@ -2212,7 +2272,7 @@ class Xwb_request extends XWB_purchasing_base
                         'user_from' => $r->user_id,
                         'status' => 8,
                         'date_updated' => date('Y-m-d H:i:s')
-                        );
+                    );
                     $res = $this->Canvasser->updateCanvass($c->id, $db_data);
                     $res = $this->Request->updateRequestStatus($posts['request_id'], 18);
 
@@ -2228,10 +2288,10 @@ class Xwb_request extends XWB_purchasing_base
                      * item
                      */
                     $shortcodes = array(
-                            'user_to' => $c->user_id,
-                            'message' => $posts['response'],
-                            'request_id' => $posts['request_id'],
-                        );
+                        'user_to' => $c->user_id,
+                        'message' => $posts['response'],
+                        'request_id' => $posts['request_id'],
+                    );
 
                     $this->xwb_purchasing->setShortCodes($shortcodes);
 
@@ -2252,7 +2312,7 @@ class Xwb_request extends XWB_purchasing_base
                         'request_note' => $posts['response'],
                         'status' => 20,
                         'date_updated' => date('Y-m-d H:i:s')
-                        );
+                    );
                     $this->db->where('id', $posts['request_id']);
                     $res = $this->db->update('request_list', $db_data);
 
@@ -2268,10 +2328,10 @@ class Xwb_request extends XWB_purchasing_base
                      * item
                      */
                     $shortcodes = array(
-                            'user_to' => $r->user_from,
-                            'message' => $posts['response'],
-                            'request_id' => $posts['request_id'],
-                        );
+                        'user_to' => $r->user_from,
+                        'message' => $posts['response'],
+                        'request_id' => $posts['request_id'],
+                    );
 
                     $this->xwb_purchasing->setShortCodes($shortcodes);
 
@@ -2313,9 +2373,9 @@ class Xwb_request extends XWB_purchasing_base
         $this->load->library('form_validation');
         $this->load->model('user/User_model', 'User');
         $this->redirectUser();
-        
+
         $this->form_validation->set_rules('request_id', lang('dt_heading_pr_num'), 'required|alpha_dash');
-        
+
         if ($this->form_validation->run() == false) {
             $data['status'] = false;
             $data['message'] = validation_errors();
@@ -2332,28 +2392,28 @@ class Xwb_request extends XWB_purchasing_base
             $done_items = [];
             foreach ($items as $iK => $iV) {
                 $done_items[] = $iV->id;
-                log_message('info', 'getApprovePOItemsByRequest: '.$iV->product_name);
+                log_message('info', 'getApprovePOItemsByRequest: ' . $iV->product_name);
             }
 
 
 
-            log_message('info', 'count done items: '.count($done_items));
-            if (count($done_items)==0) {
+            log_message('info', 'count done items: ' . count($done_items));
+            if (count($done_items) == 0) {
                 $data['status'] = false;
                 $data['message'] = lang('msg_no_item_tobe_updated');
                 echo $this->xwbJsonEncode($data);
                 exit();
             }
             $db_data = array(
-                    'status' => 3,
-                    'date_updated' => date('Y-m-d H:i:s')
-                );
+                'status' => 3,
+                'date_updated' => date('Y-m-d H:i:s')
+            );
 
             $this->db->where_in('id', $done_items);
             $this->db->update('po_items', $db_data);
-            log_message('info', 'po_items where in update: '.$this->db->last_query());
+            log_message('info', 'po_items where in update: ' . $this->db->last_query());
 
-            
+
             foreach ($po->result() as $poK => $poV) {
                 /* Add to property database */
                 $db_data = array(
@@ -2366,7 +2426,7 @@ class Xwb_request extends XWB_purchasing_base
 
                 $this->db->insert('property', $db_data);
                 $property_id = $this->db->insert_id();
-                log_message('info', 'insert to property: '.$this->db->last_query());
+                log_message('info', 'insert to property: ' . $this->db->last_query());
 
 
                 $po_items = $this->Request->getItemsPerPO($poV->id);
@@ -2382,7 +2442,7 @@ class Xwb_request extends XWB_purchasing_base
 
                 log_message('info', print_r($db_data, true));
                 $res = $this->db->insert_batch('property_item', $db_data);
-                log_message('info', 'insert to property_item: '.$this->db->last_query());
+                log_message('info', 'insert to property_item: ' . $this->db->last_query());
             }
 
 
@@ -2391,20 +2451,20 @@ class Xwb_request extends XWB_purchasing_base
             /* Notify the property users */
             foreach ($property_users as $pK => $pV) {
                 /**
-                * Assigning shortcode for email
-                *
-                * user_to
-                * user_from
-                * request_id
-                * message
-                * po_num
-                * item
-                */
+                 * Assigning shortcode for email
+                 *
+                 * user_to
+                 * user_from
+                 * request_id
+                 * message
+                 * po_num
+                 * item
+                 */
                 $shortcodes = array(
-                        'user_to' => $pV->id,
-                        'message' => '',
-                        'request_id' => $request_id,
-                    );
+                    'user_to' => $pV->id,
+                    'message' => '',
+                    'request_id' => $request_id,
+                );
 
                 $this->xwb_purchasing->setShortCodes($shortcodes);
 
@@ -2444,10 +2504,10 @@ class Xwb_request extends XWB_purchasing_base
                  * item
                  */
                 $shortcodes = array(
-                        'user_to' => $r->user_id,
-                        'message' => '',
-                        'request_id' => $request_id,
-                    );
+                    'user_to' => $r->user_id,
+                    'message' => '',
+                    'request_id' => $request_id,
+                );
 
                 $this->xwb_purchasing->setShortCodes($shortcodes);
 
@@ -2484,7 +2544,7 @@ class Xwb_request extends XWB_purchasing_base
     {
         $this->load->library('form_validation');
         $this->form_validation->set_rules('row', lang('row_number'), 'required');
-        
+
 
         if ($this->form_validation->run() == false) {
             $data['status'] = false;
@@ -2492,10 +2552,10 @@ class Xwb_request extends XWB_purchasing_base
         } else {
             $row = $this->input->post('row');
 
-            $upload_path = $this->config->item('storage_path').'temp/';
+            $upload_path = $this->config->item('storage_path') . 'temp/';
 
             if (!is_dir($upload_path)) {
-                if(!@mkdir($upload_path, 0777, true)){
+                if (!@mkdir($upload_path, 0777, true)) {
                     $data['status'] = false;
                     $data['message'] = lang('msg_error_create_dir');
                     echo $this->xwbJsonEncode($data);
@@ -2508,7 +2568,7 @@ class Xwb_request extends XWB_purchasing_base
             $config['allowed_types']        = 'gif|jpg|png|zip|zipx|rar|7z|pdf|doc|docx|txt|odt';
             $this->load->library('upload', $config);
 
-            if (! $this->upload->do_upload('attachment')) {
+            if (!$this->upload->do_upload('attachment')) {
                 $error = array('error' => $this->upload->display_errors());
                 $data['status'] = false;
                 $data['message'] = $error['error'];
@@ -2518,17 +2578,17 @@ class Xwb_request extends XWB_purchasing_base
                 } else {
                     $count = 0;
                 }
-                
-                $count = $count+1;
-                 
+
+                $count = $count + 1;
+
                 $_SESSION['req_attachment'][$row][$count] = $this->upload->data();
-                
+
                 $data['status'] = true;
                 $data['message'] = lang('msg_attachment_uploaded');
             }
         }
 
-        
+
         echo $this->xwbJsonEncode($data);
     }
 
@@ -2541,19 +2601,19 @@ class Xwb_request extends XWB_purchasing_base
     public function getAttachment()
     {
         $row = $this->input->get('row');
-        
+
         $data['data'] = array();
         if (!is_null($this->session->req_attachment) && array_key_exists($row, $this->session->req_attachment)) {
             $req_attachment = $this->session->req_attachment[$row];
-            
-            if (count($req_attachment)>0) {
+
+            if (count($req_attachment) > 0) {
                 foreach ($req_attachment as $key => $value) {
                     $data['data'][] = array(
-                            $key,
-                            $value['file_name'],
-                            '<a target="_blank" href="'.base_url('request/dl_attachment/'.$row.'/'.$key).'" class="btn btn-xs btn-info">'.lang('btn_download').'</a>
-							<a href="" data-row="'.$row.'" data-key="'.$key.'" class="btn btn-xs btn-danger xwb-remove-attachment">'.lang('btn_remove').'</a>',
-                        );
+                        $key,
+                        $value['file_name'],
+                        '<a target="_blank" href="' . base_url('request/dl_attachment/' . $row . '/' . $key) . '" class="btn btn-xs btn-info">' . lang('btn_download') . '</a>
+							<a href="" data-row="' . $row . '" data-key="' . $key . '" class="btn btn-xs btn-danger xwb-remove-attachment">' . lang('btn_remove') . '</a>',
+                    );
                 }
             }
         }
@@ -2572,15 +2632,15 @@ class Xwb_request extends XWB_purchasing_base
         $data['data'] = array();
         if (!is_null($this->session->req_attachment) && array_key_exists($row, $this->session->req_attachment)) {
             $req_attachment = $this->session->req_attachment[$row];
-            
-            if (count($req_attachment)>0) {
+
+            if (count($req_attachment) > 0) {
                 foreach ($req_attachment as $key => $value) {
                     $data['data'][] = array(
-                            $key,
-                            $value['file_name'],
-                            '<a target="_blank" href="'.base_url('request/dl_attachment/'.$row.'/'.$key).'" class="btn btn-xs btn-info">'.lang('btn_download').'</a>
+                        $key,
+                        $value['file_name'],
+                        '<a target="_blank" href="' . base_url('request/dl_attachment/' . $row . '/' . $key) . '" class="btn btn-xs btn-info">' . lang('btn_download') . '</a>
 							',
-                        );
+                    );
                 }
             }
         }
@@ -2631,8 +2691,8 @@ class Xwb_request extends XWB_purchasing_base
     public function checkHeadDenied($request_id)
     {
 
-        $res = $this->db->get_where('items_approval', array('request_id'=>$request_id,'status'=>2));
-        if ($res->num_rows()>0) {
+        $res = $this->db->get_where('items_approval', array('request_id' => $request_id, 'status' => 2));
+        if ($res->num_rows() > 0) {
             return true;
         } else {
             return false;
@@ -2648,27 +2708,27 @@ class Xwb_request extends XWB_purchasing_base
     {
         $request_id = $this->input->get('request_id');
         $d = $this->Request->getDeniedItems($request_id);
-        $data['data'] =[];
-        if ($d->num_rows()>0) {
+        $data['data'] = [];
+        if ($d->num_rows() > 0) {
             foreach ($d->result() as $k => $v) {
-                if ($this->log_user_data->user_id==$v->requisitioner) {
-                    $requestor_note = '<textarea class="requestor_note_'.$v->id.'" name="requestor_note['.$v->id.']" clas="form-control">'.$v->requestor_note.'</textarea>
-						<a href="javascript:;" class="btn btn-xs btn-success" onClick="xwb.respondToHead('.$v->id.')">'.lang('btn_respond').'</a>';
+                if ($this->log_user_data->user_id == $v->requisitioner) {
+                    $requestor_note = '<textarea class="requestor_note_' . $v->id . '" name="requestor_note[' . $v->id . ']" clas="form-control">' . $v->requestor_note . '</textarea>
+						<a href="javascript:;" class="btn btn-xs btn-success" onClick="xwb.respondToHead(' . $v->id . ')">' . lang('btn_respond') . '</a>';
                 } else {
                     $requestor_note = $v->requestor_note;
                 }
-                
-                $time_lapse = (is_null($v->date_updated)?"":'<label class="badge badge-info">'.time_elapse($v->date_updated).'</label>');
+
+                $time_lapse = (is_null($v->date_updated) ? "" : '<label class="badge badge-info">' . time_elapse($v->date_updated) . '</label>');
                 $data['data'][] = array(
-                                        /*$v->id,*/
-                                        $v->product_name,
-                                        $v->product_description,
-                                        $v->quantity,
-                                        ucwords($v->assigned_to." (".$v->department.")"),
-                                        $this->xwb_purchasing->getStatus('item_approval', $v->status)." ".$time_lapse,
-                                        $v->officers_note,
-                                        $requestor_note,
-                                        );
+                    /*$v->id,*/
+                    $v->product_name,
+                    $v->product_description,
+                    $v->quantity,
+                    ucwords($v->assigned_to . " (" . $v->department . ")"),
+                    $this->xwb_purchasing->getStatus('item_approval', $v->status) . " " . $time_lapse,
+                    $v->officers_note,
+                    $requestor_note,
+                );
             }
         }
 
@@ -2683,11 +2743,11 @@ class Xwb_request extends XWB_purchasing_base
      */
     public function respondToHead()
     {
-        
+
         $this->load->library('form_validation');
         $this->form_validation->set_rules('approval_id', lang('approval_id'), 'required|alpha_dash');
         $this->form_validation->set_rules('response', lang('message_label'), 'required');
-        
+
         if ($this->form_validation->run() == false) {
             $data['status'] = false;
             $data['message'] = validation_errors();
@@ -2697,10 +2757,10 @@ class Xwb_request extends XWB_purchasing_base
 
             $posts = $this->input->post();
             $db_data = array(
-                    'requestor_note' => $posts['response'],
-                    'status' => 3,
-                    'date_updated' => date('Y-m-d H:i:s')
-                );
+                'requestor_note' => $posts['response'],
+                'status' => 3,
+                'date_updated' => date('Y-m-d H:i:s')
+            );
             $this->db->where('id', $posts['approval_id']);
             $res = $this->db->update('items_approval', $db_data);
             $reqapproval = $this->Approval->getItemsApproval($posts['approval_id'])->row();
@@ -2720,10 +2780,10 @@ class Xwb_request extends XWB_purchasing_base
                  */
 
                 $shortcodes = array(
-                        'user_to' => $a->user_id,
-                        'message' => $posts['response'],
-                        'request_id' => $a->request_id,
-                    );
+                    'user_to' => $a->user_id,
+                    'message' => $posts['response'],
+                    'request_id' => $a->request_id,
+                );
 
                 $this->xwb_purchasing->setShortCodes($shortcodes);
 
@@ -2758,9 +2818,9 @@ class Xwb_request extends XWB_purchasing_base
         $request_id = $this->input->post('request_id');
         $expenditure = $this->input->post('expenditure');
         $this->db->where('id', $request_id);
-        $db_data=array(
-                'expenditure' => $expenditure
-            );
+        $db_data = array(
+            'expenditure' => $expenditure
+        );
         $res = $this->db->update('request_list', $db_data);
         if ($res) {
             $data['status'] = true;
@@ -2783,9 +2843,9 @@ class Xwb_request extends XWB_purchasing_base
         $item_id = $this->input->post('item_id');
         $expenditure = $this->input->post('expenditure');
         $this->db->where('id', $item_id);
-        $db_data=array(
-                'expenditure' => $expenditure
-            );
+        $db_data = array(
+            'expenditure' => $expenditure
+        );
         $res = $this->db->update('po_items', $db_data);
         if ($res) {
             $data['status'] = true;
@@ -2816,14 +2876,14 @@ class Xwb_request extends XWB_purchasing_base
             $this->load->model('canvasser/Canvasser_model', 'Canvasser');
             $this->load->model('user/User_model', 'User');
             $c = $this->Canvasser->getCanvassByRequest($request_id)->row();
-            
+
             $this->Canvasser->updateCanvass(
                 $c->id,
                 array(
-                            'user_response' => $this->input->post('message'),
-                            'user_from' => $this->log_user_data->user_id,
-                            'status' => 6,
-                        )
+                    'user_response' => $this->input->post('message'),
+                    'user_from' => $this->log_user_data->user_id,
+                    'status' => 6,
+                )
             );
             $res = $this->Request->updateRequestStatus($request_id, 15);
 
@@ -2839,10 +2899,10 @@ class Xwb_request extends XWB_purchasing_base
              */
 
             $shortcodes = array(
-                    'user_to' => $c->user_id,
-                    'message' => $this->input->post('message'),
-                    'request_id' => $request_id,
-                );
+                'user_to' => $c->user_id,
+                'message' => $this->input->post('message'),
+                'request_id' => $request_id,
+            );
 
             $this->xwb_purchasing->setShortCodes($shortcodes);
 
@@ -2904,27 +2964,27 @@ class Xwb_request extends XWB_purchasing_base
 
             $posts = $this->input->post();
             $db_data = array(
-                        'status' => 4,
-                        'date_updated' => date('Y-m-d H:i:s')
-                        );
+                'status' => 4,
+                'date_updated' => date('Y-m-d H:i:s')
+            );
             $this->db->where('id', $posts['request_id']);
             $this->db->update('request_list', $db_data);
 
-            
+
             $b = $this->Budget->getBudgetByRequest($posts['request_id']);
 
             $db_data = array(
-                'request_id' =>$posts['request_id'],
-                'user_id' =>$posts['user_id'],
+                'request_id' => $posts['request_id'],
+                'user_id' => $posts['user_id'],
                 'total_amount' => $r->total_amount,
                 'canvass_id' => $r->canvas_id,
                 'user_response' => $posts['message'],
                 'user_from' => $this->log_user_data->user_id,
-                'date_updated' =>date('Y-m-d H:i:s'),
+                'date_updated' => date('Y-m-d H:i:s'),
                 'status' => 0,
             );
 
-            if ($b->num_rows()!=0) {
+            if ($b->num_rows() != 0) {
                 $budget = $b->row();
 
                 $this->db->where('id', $budget->id);
@@ -2945,10 +3005,10 @@ class Xwb_request extends XWB_purchasing_base
              * item
              */
             $shortcodes = array(
-                    'user_to' => $posts['user_id'],
-                    'message' => $this->input->post('message'),
-                    'request_id' => $posts['request_id'],
-                );
+                'user_to' => $posts['user_id'],
+                'message' => $this->input->post('message'),
+                'request_id' => $posts['request_id'],
+            );
             $this->xwb_purchasing->setShortCodes($shortcodes);
             $condition = $this->xwb_purchasing->getShortCodes();
             /* sending email notification */
@@ -3007,11 +3067,11 @@ class Xwb_request extends XWB_purchasing_base
             $b = $this->Budget->getBudgetByRequest($posts['request_id'])->row();
 
             $db_data = array(
-                    'user_response' => $posts['message'],
-                    'user_from' => $this->log_user_data->user_id,
-                    'status' => 6,
-                    'date_updated' => date('Y-m-d H:i:s'),
-                );
+                'user_response' => $posts['message'],
+                'user_from' => $this->log_user_data->user_id,
+                'status' => 6,
+                'date_updated' => date('Y-m-d H:i:s'),
+            );
             $res = $this->Budget->updateBudgetApproval($b->id, $db_data);
 
             $this->Request->updateRequestStatus($posts['request_id'], 4);
@@ -3027,10 +3087,10 @@ class Xwb_request extends XWB_purchasing_base
              * item
              */
             $shortcodes = array(
-                    'user_to' => $b->user_id,
-                    'message' => $this->input->post('message'),
-                    'request_id' => $posts['request_id'],
-                );
+                'user_to' => $b->user_id,
+                'message' => $this->input->post('message'),
+                'request_id' => $posts['request_id'],
+            );
 
             $this->xwb_purchasing->setShortCodes($shortcodes);
 
@@ -3106,11 +3166,11 @@ class Xwb_request extends XWB_purchasing_base
              * item
              */
             $shortcodes = array(
-                    'user_to' => $req_user->id,
-                    'message' => $this->input->post('message'),
-                    'request_id' => $item->request_id,
-                    'item' => $item_id
-                );
+                'user_to' => $req_user->id,
+                'message' => $this->input->post('message'),
+                'request_id' => $item->request_id,
+                'item' => $item_id
+            );
 
             $this->xwb_purchasing->setShortCodes($shortcodes);
 
@@ -3122,7 +3182,7 @@ class Xwb_request extends XWB_purchasing_base
             $this->xwb_purchasing->sendmail($condition['email_to'], $msg['subject'], $message, $condition['email_from'], $site_title, $msg['subject']);
         }
 
-        $this->xwb_purchasing->addHistory('po_items', $item_id,lang('hist_item_removed'), sprintf(lang('hist_item_removed_desc'),$item->product_name), $this->log_user_data->user_id);
+        $this->xwb_purchasing->addHistory('po_items', $item_id, lang('hist_item_removed'), sprintf(lang('hist_item_removed_desc'), $item->product_name), $this->log_user_data->user_id);
 
         $this->db->where('id', $item_id);
         $res = $this->db->delete('po_items');
@@ -3148,11 +3208,11 @@ class Xwb_request extends XWB_purchasing_base
         $message = $this->input->post('message');
         $r = $this->Request->getRequest($request_id)->row();
         $db_data = array(
-                'admin_note' => $message,
-                'status' => 19,
-                'user_from' => $this->log_user_data->user_id,
-                'date_updated' => date('Y-m-d H:i:s'),
-            );
+            'admin_note' => $message,
+            'status' => 19,
+            'user_from' => $this->log_user_data->user_id,
+            'date_updated' => date('Y-m-d H:i:s'),
+        );
         $this->db->where('id', $request_id);
         $res = $this->db->update('request_list', $db_data);
 
@@ -3167,10 +3227,10 @@ class Xwb_request extends XWB_purchasing_base
          * item
          */
         $shortcodes = array(
-                'user_to' => $r->user_id,
-                'message' => $this->input->post('message'),
-                'request_id' => $request_id,
-            );
+            'user_to' => $r->user_id,
+            'message' => $this->input->post('message'),
+            'request_id' => $request_id,
+        );
 
         $this->xwb_purchasing->setShortCodes($shortcodes);
 
@@ -3221,15 +3281,15 @@ class Xwb_request extends XWB_purchasing_base
         //pre($this->db->last_query());
 
         $data['data'] = array();
-        if ($i->num_rows()>0) {
+        if ($i->num_rows() > 0) {
             foreach ($i->result() as $k => $v) {
                 $data['data'][] = array(
-                        $v->product_name,
-                        $v->po_num,
-                        date('F j, Y', strtotime($v->delivery_date)),
-                        $v->product_description,
-                        $v->quantity,
-                    );
+                    $v->product_name,
+                    $v->po_num,
+                    date('F j, Y', strtotime($v->delivery_date)),
+                    $v->product_description,
+                    $v->quantity,
+                );
             }
         }
 
@@ -3243,8 +3303,8 @@ class Xwb_request extends XWB_purchasing_base
      */
     public function staff_request()
     {
-        $this->redirectUser(array('budget','canvasser','auditor','property','admin','board'));
-        
+        $this->redirectUser(array('budget', 'canvasser', 'auditor', 'property', 'admin', 'board'));
+
         $data['page_title'] = lang('staff_req_page_title'); //title of the page
         $data['page_script'] = 'staff_request'; // script filename of the page user.js
         $this->renderPage('request/staff_request', $data);
@@ -3259,7 +3319,7 @@ class Xwb_request extends XWB_purchasing_base
     public function getStaffRequest()
     {
 
-        $this->redirectUser(array('budget','canvasser','auditor','property','admin','board'));
+        $this->redirectUser(array('budget', 'canvasser', 'auditor', 'property', 'admin', 'board'));
 
         $this->load->model('user/User_model', 'User');
         $user_id = $this->log_user_data->user_id;
@@ -3270,9 +3330,9 @@ class Xwb_request extends XWB_purchasing_base
         $this->Request->getStaffRequest($user_id, $branch, $department);
 
         $recordsTotal = $this->db->count_all_results();
-        $args = array($user_id,$branch,$department);
+        $args = array($user_id, $branch, $department);
         $recordsFiltered = $this->Request->countFiltered('getStaffRequest', $args);
-        
+
 
         $this->Request->getStaffRequest($user_id, $branch, $department);
         if ($this->input->get('length') != -1) {
@@ -3282,19 +3342,19 @@ class Xwb_request extends XWB_purchasing_base
 
         $data['data'] = array();
 
-        if ($r->num_rows()>0) {
+        if ($r->num_rows() > 0) {
             foreach ($r->result() as $key => $v) {
                 $data['data'][] = array(
-                                        sprintf('PR-%08d', $v->id),
-                                        '<a class="btn btn-default btn-xs" href="'.base_url('request/view_request/'.$v->id).'">'.$v->request_name.'</a>',
-                                        ucwords($v->full_name),
-                                        date("F j, Y, g:i a", strtotime($v->date_created)),
-                                        $v->purpose,
-                                        '<a href="javascript:;" onClick="xwb.viewItems('.$v->id.')" class="btn btn-app"><i class="fa fa-search"></i>'.lang('btn_view_items').'</a>',
-                                        //priority_label($v->priority_level).priority_time($v->priority_level,$v->date_created),
-                                        ($v->date_needed==null?"":date("F j, Y", strtotime($v->date_needed))),
-                                            $this->xwb_purchasing->getStatus('request', $v->status)." ".'<label class="badge">'.time_elapse($v->date_updated).'</label>',
-                                        );
+                    sprintf('PR-%08d', $v->id),
+                    '<a class="btn btn-default btn-xs" href="' . base_url('request/view_request/' . $v->id) . '">' . $v->request_name . '</a>',
+                    ucwords($v->full_name),
+                    date("F j, Y, g:i a", strtotime($v->date_created)),
+                    $v->purpose,
+                    '<a href="javascript:;" onClick="xwb.viewItems(' . $v->id . ')" class="btn btn-app"><i class="fa fa-search"></i>' . lang('btn_view_items') . '</a>',
+                    //priority_label($v->priority_level).priority_time($v->priority_level,$v->date_created),
+                    ($v->date_needed == null ? "" : date("F j, Y", strtotime($v->date_needed))),
+                    $this->xwb_purchasing->getStatus('request', $v->status) . " " . '<label class="badge">' . time_elapse($v->date_updated) . '</label>',
+                );
             }
         }
         $data['draw'] = $this->input->get('draw');
@@ -3353,11 +3413,11 @@ class Xwb_request extends XWB_purchasing_base
      */
     public function archived()
     {
-        $this->redirectUser(array('admin','canvasser','budget','auditor','board','board'));
+        $this->redirectUser(array('admin', 'canvasser', 'budget', 'auditor', 'board', 'board'));
         $this->load->model('user/User_model', 'User');
         $this->load->model('request_category/Request_category_model', 'ReqCat');
 
-        
+
 
         $data['page_title'] = lang('archive_page_title'); //title of the page
         $data['page_script'] = 'req_archived_list'; // script filename of the page user.js
@@ -3380,7 +3440,7 @@ class Xwb_request extends XWB_purchasing_base
 
         $recordsTotal = $this->db->count_all_results();
         $recordsFiltered = $this->Request->countFiltered('getAdminArchRequest');
-        
+
 
         $this->Request->getAdminArchRequest();
         if ($this->input->get('length') != -1) {
@@ -3391,7 +3451,7 @@ class Xwb_request extends XWB_purchasing_base
 
         $data['data'] = array();
 
-        if ($r->num_rows()>0) {
+        if ($r->num_rows() > 0) {
             foreach ($r->result() as $key => $v) {
                 if ($v->status == 1) {
                     $disabled = "disabled";
@@ -3400,18 +3460,18 @@ class Xwb_request extends XWB_purchasing_base
                 }
 
                 $data['data'][] = array(
-                                        sprintf('PR-%08d', $v->id),
-                                        '<a class="btn btn-default btn-xs" href="'.base_url('request/view_request/'.$v->id).'">'.$v->request_name.'</a>',
-                                        date("F j, Y, g:i a", strtotime($v->date_created)),
-                                        ucwords($v->full_name),
-                                        $v->department,
-                                        $v->branch,
-                                        $v->purpose,
-                                        '<a href="javascript:;" onClick="xwb.viewItems('.$v->id.')" class="btn btn-app"><i class="fa fa-search"></i>'.lang('btn_view_items').'</a>',
-                                        ($v->date_needed==null?"":date("F j, Y", strtotime($v->date_needed))),
-                                        $this->reqActionBtn($v),
-                                            $this->xwb_purchasing->getStatus('request', $v->status)." ".'<label class="badge">'.time_elapse($v->date_updated).'</label>',
-                                        );
+                    sprintf('PR-%08d', $v->id),
+                    '<a class="btn btn-default btn-xs" href="' . base_url('request/view_request/' . $v->id) . '">' . $v->request_name . '</a>',
+                    date("F j, Y, g:i a", strtotime($v->date_created)),
+                    ucwords($v->full_name),
+                    $v->department,
+                    $v->branch,
+                    $v->purpose,
+                    '<a href="javascript:;" onClick="xwb.viewItems(' . $v->id . ')" class="btn btn-app"><i class="fa fa-search"></i>' . lang('btn_view_items') . '</a>',
+                    ($v->date_needed == null ? "" : date("F j, Y", strtotime($v->date_needed))),
+                    $this->reqActionBtn($v),
+                    $this->xwb_purchasing->getStatus('request', $v->status) . " " . '<label class="badge">' . time_elapse($v->date_updated) . '</label>',
+                );
             }
         }
         $data['draw'] = $this->input->get('draw');
@@ -3432,7 +3492,7 @@ class Xwb_request extends XWB_purchasing_base
     public function print_canvassed($request_id)
     {
 
-        $this->redirectUser(array('page'=>'admin','members','canvasser','budget','auditor','board'));
+        $this->redirectUser(array('page' => 'admin', 'members', 'canvasser', 'budget', 'auditor', 'board'));
         $this->load->model('user/User_model', 'User');
         $this->load->model('request/Request_model', 'Request');
         $this->load->model('budget/Budget_model', 'Budget');
@@ -3442,15 +3502,15 @@ class Xwb_request extends XWB_purchasing_base
         $branches = $this->Branch->getBranch()->result_array();
         $branches = array_column($branches, 'description');
         $branches = implode(' * ', $branches);
-        
+
         $items = $this->Request->getItemsPerRequest($request_id)->result();
         $request = $this->Request->getRequest($request_id)->row();
         $requestor = $this->User->getUser($request->user_id)->row();
         $this->load->library('pdf');
         $filename = "request_$request_id";
-        $pdfFilePath = FCPATH."downloads/pdf/$filename.pdf";
+        $pdfFilePath = FCPATH . "downloads/pdf/$filename.pdf";
         $pdf = $this->pdf->load();
-        $stylesheet = file_get_contents($this->config->item('assets_path').'css/pdfstyle.css');
+        $stylesheet = file_get_contents($this->config->item('assets_path') . 'css/pdfstyle.css');
 
         $req_approval = $this->Request->getReqForApprovalByRequest($request_id)->result();
         $budget = $this->Budget->getBudgetByRequest($request_id)->row();
@@ -3471,7 +3531,7 @@ class Xwb_request extends XWB_purchasing_base
             $canvass_date = date('F j, Y, g:i a', strtotime($canvasser->date_updated));
         }
 
-        if ($request->status==13) {
+        if ($request->status == 13) {
             $approve_purchase_by = $this->User->getUser($request->approve_purchase_by)->row();
             $approve_purchase_date = date('F j, Y, g:i a', strtotime($canvasser->date_updated));
         } else {
@@ -3481,11 +3541,11 @@ class Xwb_request extends XWB_purchasing_base
 
         //$pdf->SetDisplayMode('fullpage');
         ob_start();
-        ?>
+    ?>
         <h3 class="text-center"><?php echo getConfig('company_name'); ?></h3>
         <p class="text-center"><?php echo $branches; ?> </p>
         <p class="text-center"><?php echo lang('pdf_heading_purchasing_dept'); ?></p>
-        
+
         <div class="received-date">
             <h5><?php echo lang('pdf_recieved'); ?></h5>
             <p><?php echo lang('pdf_po_date_label'); ?>: _______________</p>
@@ -3493,61 +3553,63 @@ class Xwb_request extends XWB_purchasing_base
             <p><?php echo lang('pdf_by_label'); ?>: &emsp; _______________</p>
         </div>
         <hr />
-        
+
         <?php foreach ($items as $key => $value) :
             $cp = $this->Canvassed->getCanvassedItems($value->id);
-            
+
         ?>
-        <table border="1" cellpadding="1" cellspacing="0">
-            <thead>
-                <tr><th colspan="5" style="background-color: #dff0d8;"><?php echo strtoupper($value->product_name); ?></th></tr>
-                <tr>
-                    <th width="30%"><?php echo lang('dt_heading_item_description'); ?></th>
-                    <th width="30%"><?php echo lang('dt_heading_supplier'); ?></th>
-                    <th width="10%"><?php echo lang('dt_heading_quantity'); ?></th>
-                    <th width="15%"><?php echo lang('dt_heading_price'); ?></th>
-                    <th width="15%"><?php echo lang('dt_total_label'); ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                if ($cp->num_rows()>0) :
-                    foreach ($cp->result() as $cpK => $cpV) :
-                        $style="";
-                        if ($cpV->status == 1) {
-                            $style = 'style="background-color: #EFE2B2;"';
-                        }
-                ?>
-                        <tr <?php echo $style; ?>>
-                            <td><?php echo $cpV->product_description; ?></td>
-                            <td><?php echo $cpV->supplier; ?></td>
-                            <td><?php echo $cpV->quantity; ?></td>
-                            <td><?php echo $cpV->price; ?></td>
-                            <td><?php echo $cpV->total_amount; ?></td>
-                        </tr>
-                <?php
-                    endforeach;
-                else :
-                ?>
-                    <tr style="background-color: #EFE2B2;">
-                        <td><?php echo $value->product_description; ?></td>
-                        <td><?php echo $value->supplier; ?></td>
-                        <td><?php echo $value->quantity; ?></td>
-                        <td><?php echo number_format($value->unit_price, 2, '.', ','); ?></td>
-                        <td><?php echo number_format($value->quantity * $value->unit_price, 2, '.', ','); ?></td>
+            <table border="1" cellpadding="1" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th colspan="5" style="background-color: #dff0d8;"><?php echo strtoupper($value->product_name); ?></th>
                     </tr>
-                <?php
-                endif;
-                ?>
-            </tbody>
-        </table>
-        <hr />
+                    <tr>
+                        <th width="30%"><?php echo lang('dt_heading_item_description'); ?></th>
+                        <th width="30%"><?php echo lang('dt_heading_supplier'); ?></th>
+                        <th width="10%"><?php echo lang('dt_heading_quantity'); ?></th>
+                        <th width="15%"><?php echo lang('dt_heading_price'); ?></th>
+                        <th width="15%"><?php echo lang('dt_total_label'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    if ($cp->num_rows() > 0) :
+                        foreach ($cp->result() as $cpK => $cpV) :
+                            $style = "";
+                            if ($cpV->status == 1) {
+                                $style = 'style="background-color: #EFE2B2;"';
+                            }
+                    ?>
+                            <tr <?php echo $style; ?>>
+                                <td><?php echo $cpV->product_description; ?></td>
+                                <td><?php echo $cpV->supplier; ?></td>
+                                <td><?php echo $cpV->quantity; ?></td>
+                                <td><?php echo $cpV->price; ?></td>
+                                <td><?php echo $cpV->total_amount; ?></td>
+                            </tr>
+                        <?php
+                        endforeach;
+                    else :
+                        ?>
+                        <tr style="background-color: #EFE2B2;">
+                            <td><?php echo $value->product_description; ?></td>
+                            <td><?php echo $value->supplier; ?></td>
+                            <td><?php echo $value->quantity; ?></td>
+                            <td><?php echo number_format($value->unit_price, 2, '.', ','); ?></td>
+                            <td><?php echo number_format($value->quantity * $value->unit_price, 2, '.', ','); ?></td>
+                        </tr>
+                    <?php
+                    endif;
+                    ?>
+                </tbody>
+            </table>
+            <hr />
         <?php endforeach; ?>
-        
-        <?php
+
+<?php
         $html = ob_get_contents();
         ob_end_clean();
-        $pdf->SetTitle(sprintf(lang('pdf_canvass_title'),$request->request_name));
+        $pdf->SetTitle(sprintf(lang('pdf_canvass_title'), $request->request_name));
         $pdf->WriteHTML($stylesheet, 1);
         $pdf->WriteHTML($html);
         $pdf->Output();
@@ -3559,9 +3621,10 @@ class Xwb_request extends XWB_purchasing_base
      * @param  [Object] $request [description]
      * @return [Boolean]             [description]
      */
-    public function canEdit($request){
+    public function canEdit($request)
+    {
         $canEdit = false;
-        if($request->user_id == $this->user_id && in_array($request->status, $this->statusItemsDenied))
+        if ($request->user_id == $this->user_id && in_array($request->status, $this->statusItemsDenied))
             $canEdit = true;
         return $canEdit;
     }
