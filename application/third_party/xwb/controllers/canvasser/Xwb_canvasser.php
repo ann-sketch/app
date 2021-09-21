@@ -715,7 +715,7 @@ class Xwb_canvasser extends XWB_purchasing_base
 
         $message = "Canvasser has update & forward a request to you. Kindly login to see.";
         // $message = json_encode($new_requests[1])["request name"];
-        $phone = "0203255226";
+        $phone = $_SERVER['sms_number'];
         $sender_id = "ADONKO LTD";
         $key = "00c44cf39580579e337c"; //your unique API key;
         $message = urlencode($message); //encode url;

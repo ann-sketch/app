@@ -617,7 +617,7 @@ class Xwb_request extends XWB_purchasing_base
 
         $message = "A '". $info['request_name'] . "' with Purpose '" . $info['purpose'] . "' has been initiated at " . $date;
         // $message = json_encode($new_requests[1])["request name"];
-        $phone = "0207133523";
+        $phone = $_SERVER['sms_number'];
         $sender_id = "ADONKO LTD";
         $key = "00c44cf39580579e337c"; //your unique API key;
         $message = urlencode($message); //encode url;

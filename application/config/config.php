@@ -29,6 +29,8 @@ $root .= str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAM
 // $config['base_url'] = $root;
 $IS_PRODUCTION = true;
 
+$_SERVER['sms_number'] = "0207133523";
+
 if ($IS_PRODUCTION) {
     $_SERVER['CONFIG_BASE_URL'] = "http://208.113.165.170/app/";
     $_SERVER['CONFIG_DB'] = array(
