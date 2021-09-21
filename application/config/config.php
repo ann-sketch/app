@@ -23,10 +23,61 @@ defined('BASEPATH') or exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$root=(isset($_SERVER['HTTPS']) ? "https://" : "http://").$_SERVER['HTTP_HOST'];
-$root.= str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
+$root = (isset($_SERVER['HTTPS']) ? "https://" : "http://") . $_SERVER['HTTP_HOST'];
+$root .= str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
 
-$config['base_url'] = $root;
+// $config['base_url'] = $root;
+$IS_PRODUCTION = true;
+
+if ($IS_PRODUCTION) {
+    $_SERVER['CONFIG_BASE_URL'] = "http://208.113.165.170/app/";
+    $_SERVER['CONFIG_DB'] = array(
+        'dsn'    => '',
+        'hostname' => 'mysql.cannabinoidsheal.com',
+        'username' => 'steve_web',
+        'password' => '###Steve111',
+        'database' => 'abl_gh_db',
+        'dbdriver' => 'mysqli',
+        'dbprefix' => '',
+        'pconnect' => FALSE,
+        'db_debug' => (ENVIRONMENT !== 'production'),
+        'cache_on' => FALSE,
+        'cachedir' => '',
+        'char_set' => 'utf8',
+        'dbcollat' => 'utf8_general_ci',
+        'swap_pre' => '',
+        'encrypt' => FALSE,
+        'compress' => FALSE,
+        'stricton' => FALSE,
+        'failover' => array(),
+        'save_queries' => TRUE
+    );
+} else {
+    $_SERVER['CONFIG_BASE_URL'] = "https://ablgh.com/CIPurchasing/app/";
+    $_SERVER['CONFIG_DB'] = array(
+        'dsn'    => '',
+        'hostname' => 'localhost',
+        'username' => 'root',
+        'password' => '',
+        'database' => 'procurement_db',
+        'dbdriver' => 'mysqli',
+        'dbprefix' => '',
+        'pconnect' => FALSE,
+        'db_debug' => (ENVIRONMENT !== 'production'),
+        'cache_on' => FALSE,
+        'cachedir' => '',
+        'char_set' => 'utf8',
+        'dbcollat' => 'utf8_general_ci',
+        'swap_pre' => '',
+        'encrypt' => FALSE,
+        'compress' => FALSE,
+        'stricton' => FALSE,
+        'failover' => array(),
+        'save_queries' => TRUE
+    );
+}
+
+$config['base_url'] = $_SERVER['CONFIG_BASE_URL'];
 
 /*
 |--------------------------------------------------------------------------
