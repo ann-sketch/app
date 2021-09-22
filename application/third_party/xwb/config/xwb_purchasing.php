@@ -15,13 +15,13 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /**
  * Set Site title here
  */
-$config['site_title'] = 'CI Purchasing';
+$config['site_title'] = 'ADONKO BITTERS LTD';
 
 /**
  * Footer text
  * This will be shown inthe footer area of your website
  */
-$config['footer_text'] = 'CI Purchasing - Developed by <a target="_blank" href="http://www.extremewebevolution.com">eXWeb</a>';
+$config['footer_text'] = '<a target="_blank">&copy; Copyright 2021 ADONKO BITTERS COMPANY LTD</a>';
 
 /**
  * This will be the email address from

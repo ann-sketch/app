@@ -283,11 +283,11 @@ class Xwb_purchasing extends XWB_purchasing_base
      */
     public function sendmail(
         $email_to,
-        $subject = "CI Purchasing",
+        $subject = "ADONKO BITTERS COMPANY LTD",
         $message = '',
         $email_from = "",
         $from_name = "",
-        $email_title = "CI Purchasing Email",
+        $email_title = "ADONKO BITTERS COMPANY LTD Email",
         $other = array()
     ) {
         if (getConfig('email_notification')==1) {
