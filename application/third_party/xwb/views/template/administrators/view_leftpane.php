@@ -7,7 +7,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
     <a href="<?php echo base_url(''); ?>" class="site_title">
       <?php if (getConfig('logo_to_use') == 'logo') : ?>
         <div id="preview" class="center">
-          <img src="<?php echo base_url('view_image?path=' . getConfig('logo')); ?>" alt="<?php echo (getConfig('company_name') == '' ? lang('lbl_company_name') : getConfig('company_name')); ?>" class="img-responsive" id="company_logo">
+          <img src="http://www.royalcrownpkg.com/wp-content/uploads/2015/10/adonko-rcp.png" alt="<?php echo (getConfig('company_name') == '' ? lang('lbl_company_name') : getConfig('company_name')); ?>" class="img-responsive" id="company_logo">
         </div>
       <?php else : ?>
         <h3 class="compony_logo_name">
