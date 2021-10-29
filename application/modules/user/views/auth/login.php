@@ -116,7 +116,7 @@
           </div>
           <?php echo form_close(); ?>
         </section>
-        <a href="<?php $_SERVER['ims_dept_url'] ?>">
+        <a href="<?php echo $_SERVER['ims_dept_url'] ?>">
           <button class="btn btn-warning btn-block">Go to Departmental Inventory</button>
         </a>
         <p><a href="<?php echo base_url('user/auth/forgot_password'); ?>"><?php echo lang('login_forgot_password'); ?></a></p>
