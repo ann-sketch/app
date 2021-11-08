@@ -27,13 +27,13 @@ $root = (isset($_SERVER['HTTPS']) ? "https://" : "http://") . $_SERVER['HTTP_HOS
 $root .= str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
 
 // $config['base_url'] = $root;
-$IS_PRODUCTION = true;
+$IS_PRODUCTION = false;
 
 $_SERVER['sms_number'] = "0207133523";
 
 if ($IS_PRODUCTION) {
     $_SERVER['CONFIG_BASE_URL'] = "http://208.113.165.170/app/";
-    $_SERVER['ims_dept_url'] = "http://208.113.165.170/ims-dept/";
+    $_SERVER['ims_dept_url'] = "http://208.113.165.170/ims-dept-old/";
     $_SERVER['CONFIG_DB'] = array(
         'dsn'    => '',
         'hostname' => 'mysql.cannabinoidsheal.com',
@@ -57,7 +57,7 @@ if ($IS_PRODUCTION) {
     );
 } else {
     $_SERVER['CONFIG_BASE_URL'] = "https://ablgh.com/CIPurchasing/app/";
-    $_SERVER['ims_dept_url'] = "https://ablgh.com/CIPurchasing/ims-dept/";
+    $_SERVER['ims_dept_url'] = "https://ablgh.com/CIPurchasing/ims-dept-old/";
     $_SERVER['CONFIG_DB'] = array(
         'dsn'    => '',
         'hostname' => 'localhost',
