@@ -27,7 +27,7 @@ $root = (isset($_SERVER['HTTPS']) ? "https://" : "http://") . $_SERVER['HTTP_HOS
 $root .= str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
 
 // $config['base_url'] = $root;
-$IS_PRODUCTION = false;
+$IS_PRODUCTION = true;
 
 $_SERVER['sms_number'] = "0207133523";
 
